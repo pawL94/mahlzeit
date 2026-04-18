@@ -64,6 +64,7 @@ function IngredientsScreen({ onNext, onSkip }) {
   const [ingredients, setIngredients] = useState([]);
   const [scanning, setScanning] = useState(false);
   const [scanDone, setScanDone] = useState(false);
+  const [scanError, setScanError] = useState(false);
 
   const add = () => { const v=input.trim(); if(v&&!ingredients.includes(v)) setIngredients(p=>[...p,v]); setInput(""); };
   const handleKey = e => { if(e.key==="Enter"||e.key===","){e.preventDefault();add();} };
@@ -71,17 +72,48 @@ function IngredientsScreen({ onNext, onSkip }) {
   const handleScan = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setScanning(true); setScanDone(false);
-    const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+    setScanning(true); setScanDone(false); setScanError(false);
+
     try {
-      const resp = await fetch("/api/claude", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ type:"scan", base64, mimeType:file.type||"image/jpeg" }) });
+      // Compress image using canvas (mobile photos are often 4-8MB)
+      const compressed = await new Promise((res, rej) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX = 1024;
+          let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+            else { w = Math.round(w * MAX / h); h = MAX; }
+          }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          res(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
+        };
+        img.onerror = rej;
+        img.src = url;
+      });
+
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ type:"scan", base64:compressed, mimeType:"image/jpeg" })
+      });
       const data = await resp.json();
       if (data.ingredients?.length) {
         setIngredients(prev=>{ const c=[...prev]; data.ingredients.forEach(f=>{ if(!c.includes(f)) c.push(f); }); return c; });
         setScanDone(true);
+      } else {
+        setScanError(true);
       }
-    } catch(err){ console.error(err); }
-    finally { setScanning(false); e.target.value=""; }
+    } catch(err) {
+      console.error(err);
+      setScanError(true);
+    } finally {
+      setScanning(false);
+      e.target.value="";
+    }
   };
 
   const suggestions = ["Eier","Nudeln","Tomaten","Käse","Hähnchen","Zwiebeln","Knoblauch","Reis","Kartoffeln","Paprika","Speck","Lachs","Tofu","Linsen"];
@@ -100,6 +132,8 @@ function IngredientsScreen({ onNext, onSkip }) {
           <><div style={{ width:36, height:36, borderRadius:"50%", border:`3px solid ${C.accentDim}`, borderTopColor:C.accent, animation:"spin 0.8s linear infinite", flexShrink:0 }}/><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>KI analysiert Foto...</p><p style={{color:C.textMuted,fontSize:12}}>Zutaten werden erkannt</p></div></>
         ) : scanDone ? (
           <><div style={{width:36,height:36,borderRadius:12,background:"rgba(90,185,122,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>✅</div><div><p style={{color:"#5ab97a",fontWeight:600,fontSize:14,marginBottom:2}}>Zutaten erkannt!</p><p style={{color:C.textMuted,fontSize:12}}>Erneut scannen für mehr</p></div></>
+        ) : scanError ? (
+          <><div style={{width:36,height:36,borderRadius:12,background:C.dangerGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>❌</div><div><p style={{color:C.danger,fontWeight:600,fontSize:14,marginBottom:2}}>Scan fehlgeschlagen</p><p style={{color:C.textMuted,fontSize:12}}>Erneut versuchen oder manuell eingeben</p></div></>
         ) : (
           <><div style={{width:36,height:36,borderRadius:12,background:C.accentGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📸</div><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>Kühlschrank / Vorratskammer scannen</p><p style={{color:C.textMuted,fontSize:12}}>KI erkennt Zutaten automatisch</p></div></>
         )}

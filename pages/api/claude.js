@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export const config = {
-  api: { bodyParser: { sizeLimit: "10mb" } },
+  api: { bodyParser: { sizeLimit: "20mb" } },
 };
 
 export default async function handler(req, res) {
