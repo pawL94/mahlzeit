@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (type === "scan") {
       const { base64, mimeType } = params;
       const message = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 400,
         messages: [{
           role: "user",
@@ -62,7 +62,7 @@ Antworte NUR mit JSON (kein Markdown):
 {"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
 
       const message = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1000,
         messages: [{ role: "user", content: prompt }]
       });
