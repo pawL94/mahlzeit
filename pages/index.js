@@ -215,16 +215,17 @@ function IngredientsScreen({ onNext, onSkip }) {
   const [input,setInput]=useState(""); const [ingredients,setIngredients]=useState([]);
   const [scanning,setScanning]=useState(false); const [scanDone,setScanDone]=useState(false); const [scanError,setScanError]=useState(false);
   const [showScanInfo,setShowScanInfo]=useState(false);
+  const [pendingInputId,setPendingInputId]=useState(null);
+  const [scanCount,setScanCount]=useState(0);
+  const MAX_SCANS=3;
+  const triggerScan=(inputId)=>{
+    if(!localStorage.getItem("mz_scan_consent")){setPendingInputId(inputId);setShowScanInfo(true);}
+    else{document.getElementById(inputId)?.click();}
+  };
   const add=()=>{const v=input.trim();if(v&&!ingredients.includes(v))setIngredients(p=>[...p,v]);setInput("");};
   const handleKey=e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();add();}};
   const handleScan=async(e)=>{
     const file=e.target.files?.[0];if(!file)return;
-    // Check if user has seen the privacy notice
-    if(!localStorage.getItem("mz_scan_consent")){
-      setShowScanInfo(true);
-      e.target.value="";
-      return;
-    }
     setScanning(true);setScanDone(false);setScanError(false);
     try{
       const comp=await new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{
@@ -244,7 +245,7 @@ function IngredientsScreen({ onNext, onSkip }) {
       const mimeType = comp.startsWith("/9j") ? "image/jpeg" : "image/webp";
       const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"scan",base64:comp,mimeType})});
       const data=await resp.json();
-      if(data.ingredients?.length){setIngredients(prev=>{const c=[...prev];data.ingredients.forEach(f=>{if(!c.includes(f))c.push(f);});return c;});setScanDone(true);}else setScanError(true);
+      if(data.ingredients?.length){setIngredients(prev=>{const c=[...prev];data.ingredients.forEach(f=>{if(!c.includes(f))c.push(f);});return c;});setScanDone(true);setScanCount(p=>p+1);}else setScanError(true);
     }catch(err){setScanError(true);}finally{setScanning(false);e.target.value="";}
   };
   const sugg=["Eier","Nudeln","Tomaten","Käse","Hähnchen","Zwiebeln","Knoblauch","Reis","Kartoffeln","Paprika","Speck","Lachs","Tofu","Linsen"];
@@ -264,8 +265,8 @@ function IngredientsScreen({ onNext, onSkip }) {
               Der Scan ist freiwillig – du kannst Zutaten jederzeit auch manuell eingeben.
             </p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <button onClick={()=>{localStorage.setItem("mz_scan_consent","true");setShowScanInfo(false);document.getElementById("scan-input").click();}} style={{width:"100%",padding:"15px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 8px 24px rgba(245,166,35,0.3)"}}>
-                Verstanden, Foto aufnehmen
+              <button onClick={()=>{localStorage.setItem("mz_scan_consent","true");setShowScanInfo(false);setTimeout(()=>document.getElementById(pendingInputId||"scan-camera").click(),100);}} style={{width:"100%",padding:"15px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 8px 24px rgba(245,166,35,0.3)"}}>
+                Verstanden, weiter
               </button>
               <button onClick={()=>setShowScanInfo(false)} style={{width:"100%",padding:"14px",borderRadius:50,background:"transparent",border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontWeight:600,fontSize:14,fontFamily:B}}>
                 Abbrechen
@@ -275,13 +276,49 @@ function IngredientsScreen({ onNext, onSkip }) {
         </div>
       )}
 
-      <label style={{ background:scanning?C.surface:`linear-gradient(135deg,rgba(245,166,35,0.18),rgba(196,125,14,0.1))`, border:`1.5px dashed ${scanning?C.cardBorder:scanError?C.danger:C.accentDim}`, borderRadius:18, padding:"18px 16px", marginBottom:14, display:"flex", alignItems:"center", gap:14, width:"100%", cursor:scanning?"default":"pointer", boxSizing:"border-box" }}>
-        <input id="scan-input" type="file" accept="image/*" capture="environment" onChange={handleScan} disabled={scanning} style={{display:"none"}}/>
-        {scanning?(<><Spin/><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>KI analysiert Foto...</p><p style={{color:C.textMuted,fontSize:12}}>Zutaten werden erkannt</p></div></>)
-        :scanDone?(<><div style={{width:36,height:36,borderRadius:12,background:C.greenGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>✅</div><div><p style={{color:C.green,fontWeight:600,fontSize:14,marginBottom:2}}>Zutaten erkannt!</p><p style={{color:C.textMuted,fontSize:12}}>Erneut scannen für mehr</p></div></>)
-        :scanError?(<><div style={{width:36,height:36,borderRadius:12,background:C.dangerGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>❌</div><div><p style={{color:C.danger,fontWeight:600,fontSize:14,marginBottom:2}}>Scan fehlgeschlagen</p><p style={{color:C.textMuted,fontSize:12}}>Erneut versuchen oder manuell eingeben</p></div></>)
-        :(<><div style={{width:36,height:36,borderRadius:12,background:C.accentGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>📸</div><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>Kühlschrank scannen</p><p style={{color:C.textMuted,fontSize:12}}>KI erkennt Zutaten automatisch</p></div></>)}
-      </label>
+      {/* Scan status bar */}
+      {scanning&&(
+        <div style={{background:C.card,border:`1.5px solid ${C.cardBorder}`,borderRadius:18,padding:"16px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
+          <Spin/><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>KI analysiert Foto...</p><p style={{color:C.textMuted,fontSize:12}}>Zutaten werden erkannt</p></div>
+        </div>
+      )}
+      {scanError&&!scanning&&(
+        <div style={{background:C.dangerGlow,border:`1px solid ${C.danger}`,borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:18}}>❌</span><p style={{color:C.danger,fontSize:13}}>Scan fehlgeschlagen – erneut versuchen oder manuell eingeben.</p>
+        </div>
+      )}
+      {scanDone&&!scanning&&(
+        <div style={{background:C.greenGlow,border:`1px solid ${C.green}`,borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:18}}>✅</span><p style={{color:C.green,fontSize:13,fontWeight:500}}>Zutaten erkannt und hinzugefügt – du kannst weitere Fotos scannen.</p>
+        </div>
+      )}
+
+      {/* Hidden file inputs */}
+      <input id="scan-camera" type="file" accept="image/*" capture="environment" onChange={handleScan} disabled={scanning} style={{display:"none"}}/>
+      <input id="scan-gallery" type="file" accept="image/*" onChange={handleScan} disabled={scanning} style={{display:"none"}}/>
+
+      {/* Two scan buttons */}
+      {!scanning&&(
+        <>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8}}>
+            <button onClick={()=>scanCount<MAX_SCANS&&triggerScan("scan-camera")} disabled={scanCount>=MAX_SCANS} style={{padding:"14px 10px",borderRadius:16,background:scanCount>=MAX_SCANS?C.surface:`linear-gradient(135deg,rgba(245,166,35,0.18),rgba(196,125,14,0.1))`,border:`1.5px solid ${scanCount>=MAX_SCANS?C.cardBorder:C.accentDim}`,display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:scanCount>=MAX_SCANS?"default":"pointer",opacity:scanCount>=MAX_SCANS?0.5:1}}>
+              <span style={{fontSize:24}}>📷</span>
+              <p style={{color:scanCount>=MAX_SCANS?C.textMuted:C.accent,fontWeight:600,fontSize:13}}>Kamera</p>
+              <p style={{color:C.textMuted,fontSize:11}}>Direkt fotografieren</p>
+            </button>
+            <button onClick={()=>scanCount<MAX_SCANS&&triggerScan("scan-gallery")} disabled={scanCount>=MAX_SCANS} style={{padding:"14px 10px",borderRadius:16,background:scanCount>=MAX_SCANS?C.surface:C.card,border:`1.5px solid ${C.cardBorder}`,display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:scanCount>=MAX_SCANS?"default":"pointer",opacity:scanCount>=MAX_SCANS?0.5:1}}>
+              <span style={{fontSize:24}}>🖼️</span>
+              <p style={{color:scanCount>=MAX_SCANS?C.textMuted:C.text,fontWeight:600,fontSize:13}}>Galerie</p>
+              <p style={{color:C.textMuted,fontSize:11}}>Foto auswählen</p>
+            </button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <p style={{color:C.textDim,fontSize:11}}>Kühlschrank und Vorratskammer separat scannen – Zutaten werden addiert.</p>
+            <p style={{color:scanCount>=MAX_SCANS?C.danger:C.textDim,fontSize:11,fontWeight:600,flexShrink:0,marginLeft:8}}>{scanCount}/{MAX_SCANS} Scans</p>
+          </div>
+          {scanCount>=MAX_SCANS&&<p style={{color:C.danger,fontSize:12,textAlign:"center",marginBottom:10}}>Maximale Anzahl an Scans erreicht. Zutaten bitte manuell ergänzen.</p>}
+        </>
+      )}
       <div style={{ background:C.card, border:`1.5px solid ${C.cardBorder}`, borderRadius:18, padding:"4px 16px", display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey} placeholder="Oder manuell eingeben..." style={{flex:1,fontSize:15,padding:"14px 0"}}/>
         {input&&<button onClick={add} style={{background:C.accent,color:"#0f0e0c",borderRadius:8,padding:"6px 14px",fontWeight:700,fontSize:13}}>+</button>}
