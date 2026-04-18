@@ -455,10 +455,18 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
             <div style={{width:36,height:4,borderRadius:2,background:C.cardBorder,margin:"0 auto 24px"}}/>
             <h3 style={{fontFamily:DISPLAY,fontSize:20,marginBottom:6}}>Kein Hunger drauf?</h3>
             <p style={{color:C.textMuted,fontSize:14,marginBottom:20}}>Was ist das Problem?</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              {[{label:"Zu aufwendig",emoji:"😴"},{label:"Kein Hunger drauf",emoji:"🙅"},{label:"Was ganz anderes",emoji:"🌮"},{label:"Lieber bestellen",emoji:"🛵"}].map(({label,emoji})=>(
-                <button key={label} onClick={()=>{setShowNope(false);onNope(label);}} style={{padding:"16px 12px",borderRadius:14,border:`1.5px solid ${C.cardBorder}`,background:C.surface,color:C.text,fontSize:13,fontWeight:500,fontFamily:BODY,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:24}}>{emoji}</span>{label}
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {[
+                {label:"Zu aufwendig",desc:"Zeig mir was Schnelleres",emoji:"😴",reason:"zu_aufwendig"},
+                {label:"Anderes Gericht",desc:"Komplett andere Küche und Stil",emoji:"🔄",reason:"anderes_gericht"},
+                {label:"Lieber bestellen",desc:"Öffnet Lieferando",emoji:"🛵",reason:"bestellen"},
+              ].map(({label,desc,emoji,reason})=>(
+                <button key={reason} onClick={()=>{setShowNope(false); if(reason==="bestellen"){window.open("https://www.lieferando.de","_blank");}else{onNope(reason);}}} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.cardBorder}`,background:C.surface,color:C.text,fontFamily:BODY,display:"flex",alignItems:"center",gap:14,textAlign:"left",width:"100%"}}>
+                  <span style={{fontSize:26,flexShrink:0}}>{emoji}</span>
+                  <div>
+                    <p style={{fontWeight:600,fontSize:14,marginBottom:2}}>{label}</p>
+                    <p style={{color:C.textMuted,fontSize:12}}>{desc}</p>
+                  </div>
                 </button>
               ))}
             </div>
