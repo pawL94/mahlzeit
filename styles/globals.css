@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: #0f0e0c; color: #f0ebe3; font-family: 'DM Sans', sans-serif; }
+::-webkit-scrollbar { display: none; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes slideUp { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+@keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+
+input { outline:none; border:none; background:transparent; font-family:'DM Sans',sans-serif; color:#f0ebe3; }
+input::placeholder { color:#8a8070; }
+button { cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; }
