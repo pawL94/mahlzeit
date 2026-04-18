@@ -127,8 +127,7 @@ Antworte NUR mit JSON (kein Markdown):
     if (type === "combine-shopping") {
       const { items } = params;
       // items = [{name, amount, day}, ...]
-      const itemList = items.map(i => `- ${i.name}: ${i.amount} (${i.day})`).join("
-");
+      const itemList = items.map(i => `- ${i.name}: ${i.amount} (${i.day})`).join("\n");
       const prompt = `Du bist ein präziser Einkaufshelfer. Hier sind alle benötigten Zutaten aus einem Wochenplan:
 
 ${itemList}
