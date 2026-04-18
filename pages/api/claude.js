@@ -452,8 +452,16 @@ function WeekPlanner({ profile, onBack }) {
 
   const generateAll=async(prefs,ing,dis)=>{
     setGenAll(true);
-    const fresh=empty();setWeek(fresh);
-    for(let i=0;i<7;i++) await genDay(i,fresh,prefs,ing,dis);
+    const fresh=empty();
+    setWeek(fresh);
+    // Track generated recipes to avoid repeats across days
+    const generated = [...fresh];
+    for(let i=0;i<7;i++){
+      await genDay(i,generated,prefs,ing,dis);
+      // After each day, read the latest week state to update generated list
+      setWeek(prev=>{generated.splice(0,7,...prev);return prev;});
+      await new Promise(r=>setTimeout(r,100)); // small delay for state to settle
+    }
     setGenAll(false);
   };
 
@@ -561,8 +569,9 @@ export default function Mahlzeit() {
     setScreen("loading");
     const restr=[...(activeProfile?.diet||[]),...(activeProfile?.custom||[])];
     const loved=store.recipes.load(activeProfile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
+    const lastRecipe = nope && recipe ? recipe.name : null;
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe})});
       const data=await resp.json();
       if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
     }catch(err){
