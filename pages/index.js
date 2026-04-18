@@ -122,9 +122,9 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
         <p style={{color:C.textMuted,fontSize:12,marginBottom:12}}>Wie exotisch dürfen die Zutaten sein?</p>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {[
-            ["supermarkt","🛒","Normaler Supermarkt","Nur Zutaten die in jedem Rewe oder Edeka erhältlich sind"],
-            ["markt","🏪","Gut sortierter Markt","Auch Spezialitäten wie Miso, Tahini oder Kokosmilch"],
-            ["alles","🌍","Alles möglich","Exotische Zutaten, Asiamarkt, Spezialgeschäfte"],
+            ["supermarkt","🛒","Basis","Ich kaufe nur im Discounter oder kleinen Märkten"],
+            ["markt","🏪","Standard","Mein Supermarkt ist gut sortiert"],
+            ["alles","🌍","Experimentierfreudig","Ich besorge auch spezielle Zutaten gerne"],
           ].map(([val,emoji,label,desc])=>(
             <button key={val} onClick={()=>setAvailability(val)} style={{padding:"12px 16px",borderRadius:14,fontFamily:B,border:`1.5px solid ${availability===val?C.accent:C.cardBorder}`,background:availability===val?C.accentGlow:C.card,display:"flex",alignItems:"center",gap:12,textAlign:"left",width:"100%",transition:"all 0.2s"}}>
               <span style={{fontSize:24,flexShrink:0}}>{emoji}</span>
