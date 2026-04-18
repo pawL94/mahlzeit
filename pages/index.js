@@ -14,6 +14,9 @@ const BODY = "'DM Sans', sans-serif";
 const saveProfiles = (p) => { try { localStorage.setItem("mahlzeit_profiles", JSON.stringify(p)); } catch(e) {} };
 const loadProfiles = () => { try { return JSON.parse(localStorage.getItem("mahlzeit_profiles") || "[]"); } catch(e) { return []; } };
 
+const saveRecipes = (r) => { try { localStorage.setItem("mahlzeit_recipes", JSON.stringify(r)); } catch(e) {} };
+const loadRecipes = () => { try { return JSON.parse(localStorage.getItem("mahlzeit_recipes") || "[]"); } catch(e) { return []; } };
+
 const Chip = ({ label, color, dimColor, glowColor, onRemove }) => (
   <span style={{ display:"inline-flex", alignItems:"center", gap:6, background:glowColor||C.accentGlow, border:`1px solid ${dimColor||C.accentDim}`, borderRadius:20, padding:"5px 12px", fontSize:13, color:color||C.accent, fontWeight:500 }}>
     {label}
@@ -142,7 +145,7 @@ function ProfileManager({ profiles, onSave, onBack }) {
   );
 }
 
-function SplashScreen({ profiles, onStart, onManageProfiles }) {
+function SplashScreen({ profiles, onStart, onManageProfiles, onViewSaved }) {
   const [selected, setSelected] = useState(null);
   useEffect(()=>{ if(profiles.length>0) setSelected(profiles[0].id); },[profiles]);
   return (
@@ -179,6 +182,9 @@ function SplashScreen({ profiles, onStart, onManageProfiles }) {
         </button>
         <button onClick={onManageProfiles} style={{ color:C.textMuted, fontSize:14, padding:"10px", fontFamily:BODY }}>
           {profiles.length>0?"⚙️ Profile verwalten":"➕ Profil erstellen"}
+        </button>
+        <button onClick={onViewSaved} style={{ color:C.textMuted, fontSize:14, padding:"6px", fontFamily:BODY }}>
+          📚 Gespeicherte Rezepte
         </button>
       </div>
       <p style={{ color:C.textDim, fontSize:12, marginTop:16 }}>Powered by Claude AI</p>
@@ -339,10 +345,38 @@ function LoadingScreen() {
   );
 }
 
-function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack }) {
+function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, onViewSaved }) {
   const [showNope,setShowNope]=useState(false);
   const [showShopping,setShowShopping]=useState(false);
+  const [saved,setSaved]=useState(false);
+  const [isFav,setIsFav]=useState(false);
+  const [saveAnim,setSaveAnim]=useState(false);
   if(!recipe) return null;
+
+  const handleSave = () => {
+    const recipes = loadRecipes();
+    const id = Date.now();
+    const entry = { ...recipe, id, savedAt: new Date().toLocaleDateString("de-DE"), favorite: false };
+    const updated = [entry, ...recipes.slice(0,49)]; // max 50 saved
+    saveRecipes(updated);
+    setSaved(true); setSaveAnim(true);
+    setTimeout(()=>setSaveAnim(false), 800);
+  };
+
+  const handleFav = () => {
+    if (!saved) { handleSave(); }
+    const recipes = loadRecipes();
+    const existing = recipes.find(r=>r.name===recipe.name&&r.savedAt===new Date().toLocaleDateString("de-DE"));
+    if (existing) {
+      const updated = recipes.map(r=>r.id===existing.id?{...r,favorite:!r.favorite}:r);
+      saveRecipes(updated); setIsFav(!isFav);
+    } else {
+      const id = Date.now();
+      const entry = { ...recipe, id, savedAt: new Date().toLocaleDateString("de-DE"), favorite: true };
+      saveRecipes([entry, ...recipes.slice(0,49)]);
+      setSaved(true); setIsFav(true);
+    }
+  };
   const missing=recipe.ingredients?.filter(i=>!i.available)||[];
   const allRestrictions=[...(profile?.diet||[]),...(profile?.custom||[])];
   return (
@@ -355,6 +389,17 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack }) 
             <h1 style={{fontFamily:DISPLAY,fontSize:26,fontWeight:700,lineHeight:1.2}}>{recipe.name}</h1>
           </div>
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"10px 12px",fontSize:28,flexShrink:0}}>{recipe.emoji||"🍽"}</div>
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:12}}>
+          <button onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:`1.5px solid ${saved?C.green:C.cardBorder}`,background:saved?C.greenGlow:C.card,color:saved?C.green:C.textMuted,fontSize:13,fontWeight:600,fontFamily:BODY,transition:"all 0.3s",transform:saveAnim?"scale(1.08)":"scale(1)"}}>
+            {saved?"✅ Gespeichert":"📥 Speichern"}
+          </button>
+          <button onClick={handleFav} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:`1.5px solid ${isFav?C.danger:C.cardBorder}`,background:isFav?C.dangerGlow:C.card,color:isFav?C.danger:C.textMuted,fontSize:13,fontWeight:600,fontFamily:BODY,transition:"all 0.3s"}}>
+            {isFav?"❤️ Favorit":"🤍 Favorit"}
+          </button>
+          <button onClick={onViewSaved} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:`1px solid ${C.cardBorder}`,background:C.card,color:C.textMuted,fontSize:13,fontFamily:BODY}}>
+            📚
+          </button>
         </div>
         <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:14}}>{recipe.description}</p>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:(allRestrictions.length||disliked?.length)?12:0}}>
@@ -424,6 +469,73 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack }) 
   );
 }
 
+
+function SavedRecipesScreen({ onBack, onOpen }) {
+  const [recipes, setRecipes] = useState([]);
+  const [filter, setFilter] = useState("all"); // all | favorites
+
+  useEffect(() => { setRecipes(loadRecipes()); }, []);
+
+  const toggleFav = (id) => {
+    const updated = recipes.map(r=>r.id===id?{...r,favorite:!r.favorite}:r);
+    setRecipes(updated); saveRecipes(updated);
+  };
+  const deleteRecipe = (id) => {
+    const updated = recipes.filter(r=>r.id!==id);
+    setRecipes(updated); saveRecipes(updated);
+  };
+
+  const shown = filter==="favorites" ? recipes.filter(r=>r.favorite) : recipes;
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,padding:"56px 24px 32px",display:"flex",flexDirection:"column"}}>
+      <button onClick={onBack} style={{color:C.textMuted,fontSize:14,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Zurück</button>
+      <h2 style={{fontFamily:DISPLAY,fontSize:26,fontWeight:700,marginBottom:6}}>Gespeicherte Rezepte</h2>
+      <p style={{color:C.textMuted,fontSize:14,marginBottom:20}}>Auf diesem Gerät gespeichert.</p>
+
+      <div style={{display:"flex",gap:8,marginBottom:20}}>
+        {[["all","📚 Alle"],["favorites","❤️ Favoriten"]].map(([val,label])=>(
+          <button key={val} onClick={()=>setFilter(val)} style={{padding:"9px 18px",borderRadius:50,fontFamily:BODY,fontSize:13,fontWeight:600,border:`1.5px solid ${filter===val?C.accent:C.cardBorder}`,background:filter===val?C.accentGlow:C.card,color:filter===val?C.accent:C.textMuted,transition:"all 0.2s"}}>{label}</button>
+        ))}
+      </div>
+
+      {shown.length===0 ? (
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,textAlign:"center"}}>
+          <span style={{fontSize:48}}>{filter==="favorites"?"🤍":"📭"}</span>
+          <p style={{color:C.textMuted,fontSize:15}}>{filter==="favorites"?"Noch keine Favoriten markiert":"Noch keine Rezepte gespeichert"}</p>
+          <p style={{color:C.textDim,fontSize:13}}>Tippe beim Rezept auf „Speichern"</p>
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:12,overflowY:"auto"}}>
+          {shown.map(r=>(
+            <div key={r.id} style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,overflow:"hidden"}}>
+              <div style={{padding:"16px 18px"}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:10}}>
+                  <span style={{fontSize:28,flexShrink:0}}>{r.emoji||"🍽"}</span>
+                  <div style={{flex:1}}>
+                    <p style={{fontFamily:DISPLAY,fontWeight:700,fontSize:16,lineHeight:1.2,marginBottom:3}}>{r.name}</p>
+                    <p style={{color:C.textMuted,fontSize:12}}>{r.savedAt} · {r.time} · {r.difficulty}</p>
+                  </div>
+                  <button onClick={()=>toggleFav(r.id)} style={{fontSize:20,padding:4,flexShrink:0}}>{r.favorite?"❤️":"🤍"}</button>
+                </div>
+                <p style={{color:C.textMuted,fontSize:13,lineHeight:1.5,marginBottom:12}}>{r.description}</p>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>onOpen(r)} style={{flex:1,padding:"10px",borderRadius:12,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:13,fontFamily:BODY}}>
+                    Rezept öffnen →
+                  </button>
+                  <button onClick={()=>deleteRecipe(r.id)} style={{padding:"10px 14px",borderRadius:12,background:C.dangerGlow,color:C.danger,fontSize:13,fontFamily:BODY,border:`1px solid transparent`}}>
+                    🗑
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Mahlzeit() {
   const [screen,setScreen]=useState("splash");
   const [profiles,setProfiles]=useState([]);
@@ -432,6 +544,7 @@ export default function Mahlzeit() {
   const [disliked,setDisliked]=useState([]);
   const [prefs,setPrefs]=useState(null);
   const [recipe,setRecipe]=useState(null);
+  const [viewingRecipe,setViewingRecipe]=useState(null);
 
   useEffect(()=>{ setProfiles(loadProfiles()); },[]);
 
@@ -461,14 +574,17 @@ export default function Mahlzeit() {
         <meta name="apple-mobile-web-app-capable" content="yes"/>
       </Head>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,overflowX:"hidden"}}>
-        {screen==="splash"&&<SplashScreen profiles={profiles} onStart={(p)=>{setActiveProfile(p);setScreen("ingredients");}} onManageProfiles={()=>setScreen("profiles")}/>}
+        {screen==="splash"&&<SplashScreen profiles={profiles} onStart={(p)=>{setActiveProfile(p);setScreen("ingredients");}} onManageProfiles={()=>setScreen("profiles")} onViewSaved={()=>setScreen("saved")}/>}
         {screen==="profiles"&&<ProfileManager profiles={profiles} onSave={saveAndUpdate} onBack={()=>setScreen("splash")}/>}
         {screen==="ingredients"&&<IngredientsScreen onNext={ings=>{setIngredients(ings);setScreen("disliked");}} onSkip={()=>{setIngredients([]);setScreen("disliked");}}/>}
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
         {screen==="loading"&&<LoadingScreen/>}
-        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setScreen("splash");}}/>}
+        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
+        {screen==="saved"&&<SavedRecipesScreen onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
+        {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setIngredients([]);setDisliked([]);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
       </div>
     </>
   );
 }
+// placeholder
