@@ -214,10 +214,17 @@ function SplashScreen({ profiles, onStart, onManageProfiles, onViewSaved, onWeek
 function IngredientsScreen({ onNext, onSkip }) {
   const [input,setInput]=useState(""); const [ingredients,setIngredients]=useState([]);
   const [scanning,setScanning]=useState(false); const [scanDone,setScanDone]=useState(false); const [scanError,setScanError]=useState(false);
+  const [showScanInfo,setShowScanInfo]=useState(false);
   const add=()=>{const v=input.trim();if(v&&!ingredients.includes(v))setIngredients(p=>[...p,v]);setInput("");};
   const handleKey=e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();add();}};
   const handleScan=async(e)=>{
     const file=e.target.files?.[0];if(!file)return;
+    // Check if user has seen the privacy notice
+    if(!localStorage.getItem("mz_scan_consent")){
+      setShowScanInfo(true);
+      e.target.value="";
+      return;
+    }
     setScanning(true);setScanDone(false);setScanError(false);
     try{
       const comp=await new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{
@@ -243,8 +250,33 @@ function IngredientsScreen({ onNext, onSkip }) {
   const sugg=["Eier","Nudeln","Tomaten","Käse","Hähnchen","Zwiebeln","Knoblauch","Reis","Kartoffeln","Paprika","Speck","Lachs","Tofu","Linsen"];
   return (
     <>
+      {/* Privacy notice modal */}
+      {showScanInfo&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"flex-end",zIndex:200}} onClick={()=>setShowScanInfo(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"24px 24px 0 0",padding:"28px 24px 48px",width:"100%",border:`1px solid ${C.cardBorder}`,maxWidth:430,margin:"0 auto"}}>
+            <div style={{width:36,height:4,borderRadius:2,background:C.cardBorder,margin:"0 auto 24px"}}/>
+            <p style={{fontSize:22,textAlign:"center",marginBottom:12}}>📸</p>
+            <h3 style={{fontFamily:D,fontSize:20,fontWeight:700,marginBottom:12,textAlign:"center"}}>Hinweis zum Foto-Scan</h3>
+            <p style={{color:C.textMuted,fontSize:14,lineHeight:1.7,marginBottom:20}}>
+              Das Foto wird zur Erkennung der Zutaten kurz an <strong style={{color:C.text}}>Anthropic</strong> (USA) übermittelt. Es wird dort <strong style={{color:C.text}}>nicht gespeichert</strong> – nur der erkannte Text wird zurückgesendet.
+            </p>
+            <p style={{color:C.textMuted,fontSize:14,lineHeight:1.7,marginBottom:28}}>
+              Der Scan ist freiwillig – du kannst Zutaten jederzeit auch manuell eingeben.
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button onClick={()=>{localStorage.setItem("mz_scan_consent","true");setShowScanInfo(false);document.getElementById("scan-input").click();}} style={{width:"100%",padding:"15px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 8px 24px rgba(245,166,35,0.3)"}}>
+                Verstanden, Foto aufnehmen
+              </button>
+              <button onClick={()=>setShowScanInfo(false)} style={{width:"100%",padding:"14px",borderRadius:50,background:"transparent",border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontWeight:600,fontSize:14,fontFamily:B}}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <label style={{ background:scanning?C.surface:`linear-gradient(135deg,rgba(245,166,35,0.18),rgba(196,125,14,0.1))`, border:`1.5px dashed ${scanning?C.cardBorder:scanError?C.danger:C.accentDim}`, borderRadius:18, padding:"18px 16px", marginBottom:14, display:"flex", alignItems:"center", gap:14, width:"100%", cursor:scanning?"default":"pointer", boxSizing:"border-box" }}>
-        <input type="file" accept="image/*" onChange={handleScan} disabled={scanning} style={{display:"none"}}/>
+        <input id="scan-input" type="file" accept="image/*" capture="environment" onChange={handleScan} disabled={scanning} style={{display:"none"}}/>
         {scanning?(<><Spin/><div><p style={{color:C.accent,fontWeight:600,fontSize:14,marginBottom:2}}>KI analysiert Foto...</p><p style={{color:C.textMuted,fontSize:12}}>Zutaten werden erkannt</p></div></>)
         :scanDone?(<><div style={{width:36,height:36,borderRadius:12,background:C.greenGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>✅</div><div><p style={{color:C.green,fontWeight:600,fontSize:14,marginBottom:2}}>Zutaten erkannt!</p><p style={{color:C.textMuted,fontSize:12}}>Erneut scannen für mehr</p></div></>)
         :scanError?(<><div style={{width:36,height:36,borderRadius:12,background:C.dangerGlow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>❌</div><div><p style={{color:C.danger,fontWeight:600,fontSize:14,marginBottom:2}}>Scan fehlgeschlagen</p><p style={{color:C.textMuted,fontSize:12}}>Erneut versuchen oder manuell eingeben</p></div></>)
