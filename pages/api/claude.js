@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
     // ── Recipe ────────────────────────────────────────────
     if (type === "recipe") {
-      const { ingredients, time, mood, portion, intolerances, disliked, nope, lovedRecipes, avoidNames, avoidName, weekMode, preferredCuisines } = params;
+      const { ingredients, time, mood, portion, intolerances, disliked, nope, lovedRecipes, avoidNames, avoidName, weekMode, preferredCuisines, availability } = params;
 
       const timeMap = { "Schnell": "maximal 15 Minuten", "Normal": "maximal 30 Minuten", "Gemütlich": "60 bis 90 Minuten" };
       const timeLimit = timeMap[time] || "maximal 30 Minuten";
@@ -91,7 +91,15 @@ export default async function handler(req, res) {
         "Keine Meeresfrüchte": "Keine Meeresfrüchte.",
       };
 
+      const availabilityMap = {
+        "supermarkt": "WICHTIG: Verwende AUSSCHLIESSLICH Zutaten die in einem normalen deutschen Supermarkt (Rewe, Edeka, Lidl, Aldi) erhältlich sind. Keine Spezialgeschäfte, kein Asiamarkt, keine Online-Bestellungen. Lieber ein einfacheres Gericht als exotische Zutaten.",
+        "markt": "Zutaten dürfen auch in gut sortierten Supermärkten oder Feinkostläden erhältlich sein (z.B. Miso, Tahini, Kokosmilch, Pesto, Crème fraîche). Aber keine obskuren Spezialzutaten die man extra bestellen müsste.",
+        "alles": "Alle Zutaten erlaubt, auch exotische aus Asiamarkt oder Spezialgeschäften.",
+      };
+      const availabilityHint = availabilityMap[availability] || availabilityMap["supermarkt"];
+
       const lines = [];
+      lines.push(availabilityHint);
       if (intolerances?.length > 0) lines.push("UNVERTRÄGLICHKEITEN: " + intolerances.map(i => intoleranceMap[i] || "Vermeiden: " + i).join(" | "));
       if (disliked?.length > 0) lines.push("Heute nicht gewünscht: " + disliked.join(", "));
       if (avoidName) lines.push(`"${avoidName}" wurde abgelehnt – schlage etwas KOMPLETT anderes vor!`);
