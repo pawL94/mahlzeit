@@ -78,6 +78,7 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
   const [custom,setCustom]=useState(profile?.custom||[]);
   const [ci,setCi]=useState("");
   const [cuisines,setCuisines]=useState(profile?.cuisines||[]);
+  const [availability,setAvailability]=useState(profile?.availability||"supermarkt");
   const EMOJIS=["🧑","👩","👨","👧","👦","👶","🧓","👴","👵","🐱","🐶","⭐"];
   const toggle=(v)=>setDiet(p=>p.includes(v)?p.filter(x=>x!==v):[...p,v]);
   const addC=()=>{const v=ci.trim();if(v&&!custom.includes(v))setCustom(p=>[...p,v]);setCi("");};
@@ -116,8 +117,28 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
           {CUISINES.map(({l,e})=>(<TagToggle key={l} label={l} emoji={e} selected={cuisines.includes(l)} color={C.accent} glowColor={C.accentGlow} onClick={()=>setCuisines(p=>p.includes(l)?p.filter(x=>x!==l):[...p,l])}/>))}
         </div>
       </div>
+      <div style={{ marginBottom:20 }}>
+        <SL>🛒 Zutaten-Verfügbarkeit</SL>
+        <p style={{color:C.textMuted,fontSize:12,marginBottom:12}}>Wie exotisch dürfen die Zutaten sein?</p>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            ["supermarkt","🛒","Normaler Supermarkt","Nur Zutaten die in jedem Rewe oder Edeka erhältlich sind"],
+            ["markt","🏪","Gut sortierter Markt","Auch Spezialitäten wie Miso, Tahini oder Kokosmilch"],
+            ["alles","🌍","Alles möglich","Exotische Zutaten, Asiamarkt, Spezialgeschäfte"],
+          ].map(([val,emoji,label,desc])=>(
+            <button key={val} onClick={()=>setAvailability(val)} style={{padding:"12px 16px",borderRadius:14,fontFamily:B,border:`1.5px solid ${availability===val?C.accent:C.cardBorder}`,background:availability===val?C.accentGlow:C.card,display:"flex",alignItems:"center",gap:12,textAlign:"left",width:"100%",transition:"all 0.2s"}}>
+              <span style={{fontSize:24,flexShrink:0}}>{emoji}</span>
+              <div>
+                <p style={{fontWeight:600,fontSize:14,color:availability===val?C.accent:C.text,marginBottom:2}}>{label}</p>
+                <p style={{fontSize:12,color:C.textMuted}}>{desc}</p>
+              </div>
+              {availability===val&&<span style={{marginLeft:"auto",color:C.accent,fontSize:16,flexShrink:0}}>✓</span>}
+            </button>
+          ))}
+        </div>
+      </div>
       <div style={{flex:1}}/>
-      <BigBtn label={isNew?"Profil erstellen ✓":"Speichern ✓"} onClick={()=>{if(name.trim())onSave({name:name.trim(),emoji,diet,custom,cuisines,id:profile?.id||Date.now()});}} disabled={!name.trim()}/>
+      <BigBtn label={isNew?"Profil erstellen ✓":"Speichern ✓"} onClick={()=>{if(name.trim())onSave({name:name.trim(),emoji,diet,custom,cuisines,availability,id:profile?.id||Date.now()});}} disabled={!name.trim()}/>
     </div>
   );
 }
@@ -477,7 +498,7 @@ function WeekPlanner({ profile, onBack }) {
     const loved=store.recipes.load(profile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const used=(cur||week).filter((_,j)=>j!==idx).map(x=>x.recipe?.name).filter(Boolean);
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true,preferredCuisines:profile?.cuisines||[]})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true,preferredCuisines:profile?.cuisines||[],availability:profile?.availability||"supermarkt"})});
       const data=await resp.json();
       if(data.recipe){setWeek(prev=>{const u=prev.map((x,j)=>j===idx?{...x,recipe:data.recipe,loading:false}:x);store.week.save(profile?.id,u);return u;});}
       else setWeek(prev=>prev.map((x,j)=>j===idx?{...x,loading:false}:x));
@@ -677,7 +698,7 @@ export default function Mahlzeit() {
     const loved=store.recipes.load(activeProfile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const lastRecipe = nope && recipe ? recipe.name : null;
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[]})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt"})});
       const data=await resp.json();
       if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
     }catch(err){
