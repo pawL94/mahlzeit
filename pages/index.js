@@ -62,6 +62,14 @@ const DIET = [
   {l:"Eierallergie",e:"🥚"},{l:"Sojaallergie",e:"🫘"},{l:"Keine Meeresfrüchte",e:"🦐"},
 ];
 
+const CUISINES = [
+  {l:"Deutsch",e:"🥨"},{l:"Italienisch",e:"🍝"},{l:"Spanisch",e:"🥘"},
+  {l:"Französisch",e:"🥐"},{l:"Griechisch",e:"🫒"},{l:"Türkisch",e:"🥙"},
+  {l:"Asiatisch",e:"🍜"},{l:"Japanisch",e:"🍣"},{l:"Koreanisch",e:"🍱"},
+  {l:"Indisch",e:"🍛"},{l:"Mexikanisch",e:"🌮"},{l:"Amerikanisch",e:"🍔"},
+  {l:"Mediterran",e:"🐟"},{l:"Libanesisch",e:"🧆"},{l:"Vietnamesisch",e:"🍲"},
+];
+
 // ── Profile Editor ────────────────────────────────────────
 function ProfileEditor({ profile, onSave, onCancel, isNew }) {
   const [name,setName]=useState(profile?.name||"");
@@ -69,6 +77,7 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
   const [diet,setDiet]=useState(profile?.diet||[]);
   const [custom,setCustom]=useState(profile?.custom||[]);
   const [ci,setCi]=useState("");
+  const [cuisines,setCuisines]=useState(profile?.cuisines||[]);
   const EMOJIS=["🧑","👩","👨","👧","👦","👶","🧓","👴","👵","🐱","🐶","⭐"];
   const toggle=(v)=>setDiet(p=>p.includes(v)?p.filter(x=>x!==v):[...p,v]);
   const addC=()=>{const v=ci.trim();if(v&&!custom.includes(v))setCustom(p=>[...p,v]);setCi("");};
@@ -100,8 +109,15 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
         </div>
         {custom.length>0&&<div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:10 }}>{custom.map(c=><Chip key={c} label={c} color={C.danger} dimColor="#b03030" glowColor={C.dangerGlow} onRemove={()=>setCustom(p=>p.filter(x=>x!==c))}/>)}</div>}
       </div>
+      <div style={{ marginBottom:20 }}>
+        <SL>🌍 Lieblingsküchen</SL>
+        <p style={{color:C.textMuted,fontSize:12,marginBottom:10}}>Die KI bevorzugt diese Küchen – leer lassen für maximale Vielfalt.</p>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+          {CUISINES.map(({l,e})=>(<TagToggle key={l} label={l} emoji={e} selected={cuisines.includes(l)} color={C.accent} glowColor={C.accentGlow} onClick={()=>setCuisines(p=>p.includes(l)?p.filter(x=>x!==l):[...p,l])}/>))}
+        </div>
+      </div>
       <div style={{flex:1}}/>
-      <BigBtn label={isNew?"Profil erstellen ✓":"Speichern ✓"} onClick={()=>{if(name.trim())onSave({name:name.trim(),emoji,diet,custom,id:profile?.id||Date.now()});}} disabled={!name.trim()}/>
+      <BigBtn label={isNew?"Profil erstellen ✓":"Speichern ✓"} onClick={()=>{if(name.trim())onSave({name:name.trim(),emoji,diet,custom,cuisines,id:profile?.id||Date.now()});}} disabled={!name.trim()}/>
     </div>
   );
 }
@@ -426,7 +442,7 @@ function SavedRecipesScreen({ profile, profiles, onBack, onOpen }) {
 
 // ── Week Planner ──────────────────────────────────────────
 function WeekPlanner({ profile, onBack }) {
-  const empty=()=>DAYS.map(day=>({day,recipe:null,loading:false}));
+  const empty=()=>DAYS.map((day,i)=>({day,recipe:null,loading:false,time:i>=5?"Gemütlich":"Normal"}));
   const [phase,setPhase]=useState("setup-ingredients");
   const [wIng,setWIng]=useState([]);
   const [wDis,setWDis]=useState([]);
@@ -434,16 +450,20 @@ function WeekPlanner({ profile, onBack }) {
   const [week,setWeek]=useState(()=>store.week.load(profile?.id)||empty());
   const [genAll,setGenAll]=useState(false);
   const [viewIdx,setViewIdx]=useState(null);
+  const [showShopping,setShowShopping]=useState(false);
+  const [shoppingList,setShoppingList]=useState(null);
+  const [loadingShopping,setLoadingShopping]=useState(false);
 
   const genDay=async(idx,cur,prefs,ing,dis,nope=null)=>{
-    const p=prefs||wPrefs||{time:"Normal",mood:"Herzhaft",portion:"2"};
+    const dayTime = cur ? (cur[idx]?.time || "Normal") : (week[idx]?.time || "Normal");
+    const p=prefs ? {...prefs, time: prefs.time || dayTime} : wPrefs ? {...wPrefs, time: dayTime} : {time:dayTime,mood:"Herzhaft",portion:"2"};
     const i=ing!==undefined?ing:wIng; const d=dis!==undefined?dis:wDis;
     setWeek(prev=>prev.map((x,j)=>j===idx?{...x,loading:true}:x));
     const restr=[...(profile?.diet||[]),...(profile?.custom||[])];
     const loved=store.recipes.load(profile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const used=(cur||week).filter((_,j)=>j!==idx).map(x=>x.recipe?.name).filter(Boolean);
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true,preferredCuisines:profile?.cuisines||[]})});
       const data=await resp.json();
       if(data.recipe){setWeek(prev=>{const u=prev.map((x,j)=>j===idx?{...x,recipe:data.recipe,loading:false}:x);store.week.save(profile?.id,u);return u;});}
       else setWeek(prev=>prev.map((x,j)=>j===idx?{...x,loading:false}:x));
@@ -468,6 +488,27 @@ function WeekPlanner({ profile, onBack }) {
   const saveR=(recipe)=>{
     const rs=store.recipes.load(profile?.id);
     store.recipes.save(profile?.id,[{...recipe,id:Date.now(),savedAt:new Date().toLocaleDateString("de-DE"),profileId:profile?.id||null,status:"saved"},...rs.slice(0,49)]);
+  };
+
+  const combineShoppingList=async()=>{
+    setLoadingShopping(true);
+    setShoppingList(null);
+    // Collect all missing ingredients from all days
+    const items=[];
+    week.forEach(d=>{
+      if(d.recipe?.ingredients){
+        d.recipe.ingredients.filter(i=>!i.available).forEach(i=>{
+          items.push({name:i.name,amount:i.amount,day:d.day});
+        });
+      }
+    });
+    if(items.length===0){setShoppingList({categories:[]});setLoadingShopping(false);return;}
+    try{
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"combine-shopping",items})});
+      const data=await resp.json();
+      setShoppingList(data);
+    }catch(e){console.error(e);}
+    finally{setLoadingShopping(false);}
   };
 
   // View a day's recipe in full RecipeScreen
@@ -513,20 +554,71 @@ function WeekPlanner({ profile, onBack }) {
         {profile&&<span style={{fontSize:20}}>{profile.emoji}</span>}
       </div>
       <p style={{color:C.textMuted,fontSize:13,marginBottom:16}}>Tippe auf ein Gericht für Details und die Nope-Funktion.</p>
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
         <button onClick={()=>setPhase("setup-ingredients")} style={{flex:1,padding:"11px",borderRadius:50,background:C.card,border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontWeight:600,fontSize:13,fontFamily:B}}>← Neu planen</button>
         <button onClick={()=>generateAll(wPrefs,wIng,wDis)} disabled={genAll} style={{flex:2,padding:"11px",borderRadius:50,background:genAll?C.surface:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:genAll?C.textDim:"#0f0e0c",fontWeight:700,fontSize:13,fontFamily:B,boxShadow:genAll?"none":"0 4px 16px rgba(245,166,35,0.25)"}}>
           {genAll?"Generiert...":"✨ Alle neu"}
         </button>
       </div>
+
+      {/* Shopping list button */}
+      {week.some(d=>d.recipe?.ingredients?.some(i=>!i.available))&&(
+        <button onClick={()=>{setShowShopping(!showShopping);if(!showShopping&&!shoppingList)combineShoppingList();}} style={{width:"100%",padding:"12px",borderRadius:14,background:showShopping?C.accentGlow:C.card,border:`1.5px solid ${showShopping?C.accent:C.cardBorder}`,color:showShopping?C.accent:C.textMuted,fontWeight:600,fontSize:14,fontFamily:B,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          🛒 {showShopping?"Einkaufsliste ausblenden":"Wocheneinkaufsliste anzeigen"}
+        </button>
+      )}
+
+      {/* Shopping list panel */}
+      {showShopping&&(
+        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18,marginBottom:16}}>
+          {loadingShopping?(
+            <div style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0"}}><Spin size={20}/><p style={{color:C.textMuted,fontSize:14}}>Liste wird zusammengefasst...</p></div>
+          ):shoppingList?.categories?.length===0?(
+            <p style={{color:C.textMuted,fontSize:14}}>Alle Zutaten sind bereits vorhanden!</p>
+          ):shoppingList?(
+            <>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <h3 style={{fontFamily:D,fontSize:17}}>🛒 Wocheneinkaufsliste</h3>
+                <button onClick={()=>{combineShoppingList();}} style={{color:C.accent,fontSize:12,fontFamily:B,padding:"5px 10px",background:C.accentGlow,borderRadius:8}}>↻ Neu</button>
+              </div>
+              {shoppingList.categories.map((cat,ci)=>(
+                <div key={ci} style={{marginBottom:16}}>
+                  <p style={{color:C.accent,fontSize:11,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>{cat.name}</p>
+                  {cat.items.map((item,ii)=>(
+                    <div key={ii} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.cardBorder}`}}>
+                      <span style={{fontSize:14,color:C.text}}>🛒 {item.name}</span>
+                      <span style={{fontSize:13,color:C.textMuted}}>{item.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <button onClick={()=>{
+                const text=shoppingList.categories.map(c=>c.name+":\n"+c.items.map(i=>"- "+i.name+": "+i.amount).join("\n")).join("\n\n");
+                navigator.clipboard.writeText(text).catch(()=>{});
+              }} style={{marginTop:8,width:"100%",padding:"10px",borderRadius:10,background:C.surface,border:`1px solid ${C.cardBorder}`,color:C.textMuted,fontSize:13,fontFamily:B,fontWeight:600}}>
+                📋 Liste kopieren
+              </button>
+            </>
+          ):null}
+        </div>
+      )}
       <div style={{display:"flex",flexDirection:"column",gap:12,overflowY:"auto"}}>
         {week.map((d,i)=>(
           <div key={d.day} style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:"16px 18px"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:d.recipe?10:0}}>
-              <p style={{fontWeight:700,fontSize:15,color:C.accent}}>{d.day}</p>
-              <div style={{display:"flex",gap:8}}>
-                {d.recipe&&<button onClick={()=>saveR(d.recipe)} style={{color:C.green,fontSize:12,fontFamily:B,padding:"5px 10px",background:C.greenGlow,borderRadius:8}}>📥</button>}
-                <button onClick={()=>genDay(i,week)} disabled={d.loading||genAll} style={{padding:"7px 12px",borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accentDim}`,color:C.accent,fontSize:12,fontFamily:B,fontWeight:600}}>{d.loading?"...":d.recipe?"🔄":"Generieren"}</button>
+            <div style={{marginBottom:8}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                <p style={{fontWeight:700,fontSize:15,color:C.accent}}>{d.day}</p>
+                <div style={{display:"flex",gap:8}}>
+                  {d.recipe&&<button onClick={()=>saveR(d.recipe)} style={{color:C.green,fontSize:12,fontFamily:B,padding:"5px 10px",background:C.greenGlow,borderRadius:8}}>📥</button>}
+                  <button onClick={()=>genDay(i,week)} disabled={d.loading||genAll} style={{padding:"7px 12px",borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accentDim}`,color:C.accent,fontSize:12,fontFamily:B,fontWeight:600}}>{d.loading?"...":d.recipe?"🔄":"Generieren"}</button>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                {[["Schnell","⚡"],["Normal","🕐"],["Gemütlich","🌿"]].map(([t,e])=>(
+                  <button key={t} onClick={()=>setWeek(prev=>{const u=prev.map((x,j)=>j===i?{...x,time:t}:x);store.week.save(profile?.id,u);return u;})} style={{flex:1,padding:"5px 4px",borderRadius:8,fontFamily:B,fontSize:11,fontWeight:500,border:`1px solid ${d.time===t?C.accent:C.cardBorder}`,background:d.time===t?C.accentGlow:C.surface,color:d.time===t?C.accent:C.textMuted,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                    <span>{e}</span>{t}
+                  </button>
+                ))}
               </div>
             </div>
             {d.loading?(
@@ -571,7 +663,7 @@ export default function Mahlzeit() {
     const loved=store.recipes.load(activeProfile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const lastRecipe = nope && recipe ? recipe.name : null;
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[]})});
       const data=await resp.json();
       if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
     }catch(err){
