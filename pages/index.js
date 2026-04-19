@@ -1112,7 +1112,7 @@ Antworte NUR mit JSON:
         try{
           const match=fullText.match(/\{[\s\S]*"name"[\s\S]*"steps"[\s\S]*\]/);
           if(match){
-            const partial=match[0]+(fullText.endsWith("}")?"":","tip":"Guten Appetit!"}");
+            const partial=match[0]+(fullText.endsWith("}")?'':(',"tip":"Guten Appetit!"}'));
             const recipe=JSON.parse(partial);
             setRecipe(recipe);setScreen("recipe");
           } else {
