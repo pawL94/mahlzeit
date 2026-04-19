@@ -29,8 +29,10 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const err = await response.json();
-      res.write(`event: error\ndata: ${JSON.stringify({ error: err.error?.message })}\n\n`);
+      let errMsg = "API error " + response.status;
+      try { const err = await response.json(); errMsg = err.error?.message || errMsg; } catch(e) {}
+      console.error("Anthropic API error:", errMsg);
+      res.write(`event: error\ndata: ${JSON.stringify({ error: errMsg })}\n\n`);
       res.end();
       return;
     }
