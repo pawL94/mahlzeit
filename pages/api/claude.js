@@ -136,7 +136,7 @@ REGELN:
 Antworte NUR mit JSON (kein Markdown):
 {"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
 
-      const text = await callClaude(prompt, 650);
+      const text = await callClaude(prompt, 1000);
       const recipe = JSON.parse(text.replace(/```json|```/g, "").trim());
       return res.status(200).json({ recipe });
     }
