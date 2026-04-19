@@ -355,7 +355,7 @@ function IngredientsScreen({ onNext, onSkip }) {
               </span>
             ))}
           </div>
-          {mustUse.length>0&&<p style={{color:C.danger,fontSize:11,fontWeight:500}}>Rot markierte Zutaten werden im Rezept verwendet</p>}
+          {mustUse.length>0&&<p style={{color:C.danger,fontSize:11,fontWeight:500}}>Rot markierte Zutaten müssen zwingend im Rezept vorkommen</p>}
         </div>
       )}
       <p style={{color:C.textDim,fontSize:11,textAlign:"center",marginBottom:12}}>💡 Tipp: Zutat doppelt antippen = muss im Rezept vorkommen (z.B. für Lebensmittel die bald ablaufen)</p>
