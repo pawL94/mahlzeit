@@ -1040,7 +1040,7 @@ export default function Mahlzeit() {
       const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
       const mustUseHint=mustUse?.length>0?"PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen (bald ablaufend!): "+mustUse.join(", "):"";
       if(mustUseHint) lines.push(mustUseHint);
-      if(noShopping) lines.push("KEIN EINKAUF: Nutze ausschließlich die vorhandenen Zutaten. Nur wenn sich absolut kein sinnvolles Gericht ergibt, darf maximal EINE einzige Zutat zugekauft werden.");
+      if(noShopping) lines.push("KEIN EINKAUF: Nutze nur die vorhandenen Zutaten. Grundzutaten die in jedem Haushalt vorhanden sind darfst du voraussetzen: Salz, Pfeffer, Öl, Butter, Essig, Zucker, Mehl, Gewürze. Alles andere nur aus der Vorratsliste. Nur wenn sich absolut kein sinnvolles Gericht ergibt darf maximal EINE frische Zutat zugekauft werden.");
       const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
         "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
         "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
