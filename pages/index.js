@@ -434,28 +434,120 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
 }
 
 // ── Loading ───────────────────────────────────────────────
-function LoadingScreen({ streamText="" }) {
-  const recipeName = (() => {
-    const match = streamText.match(/"name"\s*:\s*"([^"]+)"/);
-    return match ? match[1] : null;
-  })();
-  const hasDescription = streamText.includes('"description"');
+// Parse partial JSON fields safely
+function parseStreamField(text, field) {
+  const match = text.match(new RegExp('"' + field + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)'));
+  return match ? match[1] : null;
+}
+function parseStreamArray(text, field) {
+  const start = text.indexOf('"' + field + '"');
+  if(start===-1) return null;
+  const arrStart = text.indexOf('[', start);
+  if(arrStart===-1) return null;
+  // Collect complete string items from array
+  const items = [];
+  const re = /"((?:[^"\\]|\\.)*)"/g;
+  re.lastIndex = arrStart + 1;
+  let m;
+  while((m = re.exec(text)) !== null && m.index < text.length) {
+    if(text[m.index-1] === ':') continue; // skip keys
+    items.push(m[1]);
+  }
+  return items.length > 0 ? items : null;
+}
+function parseStreamIngredients(text) {
+  const start = text.indexOf('"ingredients"');
+  if(start===-1) return null;
+  const arrStart = text.indexOf('[', start);
+  if(arrStart===-1) return null;
+  const items = [];
+  // Match complete ingredient objects
+  const re = /\{"name":"((?:[^"\\]|\\.)*)","amount":"((?:[^"\\]|\\.)*)","available":(true|false)\}/g;
+  re.lastIndex = arrStart;
+  let m;
+  while((m = re.exec(text)) !== null) items.push({name:m[1],amount:m[2],available:m[3]==="true"});
+  return items.length > 0 ? items : null;
+}
 
-  return (
+function LoadingScreen({ streamText="" }) {
+  const name = parseStreamField(streamText, "name");
+  const emoji = parseStreamField(streamText, "emoji");
+  const description = parseStreamField(streamText, "description");
+  const time = parseStreamField(streamText, "time");
+  const difficulty = parseStreamField(streamText, "difficulty");
+  const calories = parseStreamField(streamText, "calories");
+  const ingredients = parseStreamIngredients(streamText);
+  const steps = parseStreamArray(streamText, "steps");
+  const tip = parseStreamField(streamText, "tip");
+  const hasContent = !!name;
+
+  if (!hasContent) return (
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:`radial-gradient(ellipse at 50% 40%, rgba(245,166,35,0.06) 0%, transparent 60%), ${C.bg}`}}>
       <span style={{fontSize:56,display:"block",marginBottom:32,animation:"bounce 1s ease-in-out infinite"}}>👨‍🍳</span>
-      <h2 style={{fontFamily:D,fontSize:26,fontWeight:700,marginBottom:16}}>Ich koche für dich...</h2>
-      {recipeName ? (
-        <div style={{animation:"fadeUp 0.4s ease"}}>
-          <p style={{color:C.textMuted,fontSize:13,marginBottom:6}}>Dein Gericht heute:</p>
-          <p style={{color:C.accent,fontSize:20,fontWeight:700,fontFamily:D,marginBottom:4}}>{recipeName}</p>
-          {hasDescription && <p style={{color:C.textMuted,fontSize:13,animation:"pulse 1.5s ease-in-out infinite"}}>Rezept wird zusammengestellt...</p>}
+      <h2 style={{fontFamily:D,fontSize:26,fontWeight:700,marginBottom:12}}>Ich koche für dich...</h2>
+      <p style={{color:C.accent,fontSize:14,fontWeight:500,animation:"pulse 1.5s ease-in-out infinite"}}>Analysiere deine Präferenzen...</p>
+      <div style={{display:"flex",gap:6,marginTop:32}}>{[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:4,background:C.accent,animation:`pulse ${1+i*0.3}s ease-in-out infinite`,animationDelay:`${i*0.2}s`}}/>)}</div>
+    </div>
+  );
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,overflowY:"auto"}}>
+      <div style={{background:"linear-gradient(180deg,rgba(245,166,35,0.1) 0%,transparent 100%)",padding:"60px 24px 28px",borderBottom:`1px solid ${C.cardBorder}`,animation:"fadeUp 0.4s ease"}}>
+        <p style={{color:C.accent,fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>🎯 Dein Rezept</p>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+          <h1 style={{fontFamily:D,fontSize:26,fontWeight:700,lineHeight:1.2,flex:1,paddingRight:16}}>{name}</h1>
+          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"10px 12px",fontSize:28,flexShrink:0}}>{emoji||"🍽"}</div>
         </div>
-      ) : (
-        <p style={{color:C.accent,fontSize:14,fontWeight:500,animation:"pulse 1.5s ease-in-out infinite"}}>Analysiere deine Präferenzen...</p>
-      )}
-      <div style={{display:"flex",gap:6,marginTop:32}}>
-        {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:4,background:C.accent,animation:`pulse ${1+i*0.3}s ease-in-out infinite`,animationDelay:`${i*0.2}s`}}/>)}
+        {description && <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:14,animation:"fadeUp 0.3s ease"}}>{description}</p>}
+        {(time||difficulty||calories) && (
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",animation:"fadeUp 0.3s ease"}}>
+            {time && <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:10,padding:"7px 12px",fontSize:12,color:C.textMuted}}>⏱ {time}</div>}
+            {difficulty && <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:10,padding:"7px 12px",fontSize:12,color:C.textMuted}}>📊 {difficulty}</div>}
+            {calories && <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:10,padding:"7px 12px",fontSize:12,color:C.textMuted}}>🔥 {calories}</div>}
+          </div>
+        )}
+      </div>
+
+      <div style={{padding:"22px 24px 140px",display:"flex",flexDirection:"column",gap:18}}>
+        {ingredients && (
+          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18,animation:"fadeUp 0.3s ease"}}>
+            <h3 style={{fontFamily:D,fontSize:17,marginBottom:14}}>🛒 Zutaten</h3>
+            {ingredients.map((ing,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:i<ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}>
+                <span style={{fontSize:14,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span>
+                <span style={{fontSize:13,color:C.textMuted}}>{ing.amount}</span>
+              </div>
+            ))}
+            {!steps && <div style={{marginTop:12,display:"flex",alignItems:"center",gap:8}}><div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${C.accentDim}`,borderTopColor:C.accent,animation:"spin 0.8s linear infinite"}}/><p style={{color:C.textMuted,fontSize:12}}>Zubereitung wird geladen...</p></div>}
+          </div>
+        )}
+
+        {steps && (
+          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18,animation:"fadeUp 0.3s ease"}}>
+            <h3 style={{fontFamily:D,fontSize:17,marginBottom:14}}>👨‍🍳 Zubereitung</h3>
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              {steps.map((step,i)=>(
+                <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+                  <div style={{minWidth:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#0f0e0c",flexShrink:0}}>{i+1}</div>
+                  <p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:4}}>{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tip && (
+          <div style={{background:C.accentGlow,border:`1px solid ${C.accentDim}`,borderRadius:14,padding:14,animation:"fadeUp 0.3s ease"}}>
+            <p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>💡 <strong>Tipp:</strong> {tip}</p>
+          </div>
+        )}
+
+        {!ingredients && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"20px 0"}}>
+            <div style={{width:20,height:20,borderRadius:"50%",border:`3px solid ${C.accentDim}`,borderTopColor:C.accent,animation:"spin 0.8s linear infinite"}}/>
+            <p style={{color:C.textMuted,fontSize:14}}>Zutaten werden zusammengestellt...</p>
+          </div>
+        )}
       </div>
     </div>
   );
