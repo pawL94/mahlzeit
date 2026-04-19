@@ -110,9 +110,9 @@ export default async function handler(req, res) {
       if (weekMode) lines.push("Wochenplanung: ausgewogenes Abendessen. WICHTIG: Die verfügbaren Zutaten sind der Wochenvorrat – jede einzelne Zutat darf NUR in maximal 2 von 7 Gerichten vorkommen. Nutze heute NUR 1-2 der verfügbaren Zutaten und wähle die Küche " + cuisine + " – auch wenn diese Küche die Zutaten normalerweise nicht verwendet.");
       if (devices?.length > 0) {
         const deviceHints = {
-          "Airfryer (1 Korb)": "Airfryer verwenden: Rezept für einen Korb optimieren. Temperatur in °C und Zeit in Minuten präzise angeben (z.B. '200°C, 15 Min'). Vorheizen erwähnen. Mengen für einen Korb ausrichten.",
-          "Airfryer (2 Körbe)": "Dual-Basket Airfryer verwenden: Nutze beide Körbe gleichzeitig! Plane Hauptkomponente und Beilage separat mit je eigener Temperatur und Zeit. Gib für jeden Korb an was hineinkommt, bei welcher Temperatur und wie lange. Das ist der große Vorteil des Dual-Basket – zwei Komponenten gleichzeitig perfekt garen.",
-          "Thermomix": "Thermomix verwenden: Alle Schritte mit konkreten TM-Funktionen formulieren (z.B. 'Stufe 4, 100°C, 10 Min' oder 'Varoma, Stufe 2, 20 Min'). Reihenfolge der Zutaten TM-typisch. Nur Rezepte die wirklich im Thermomix funktionieren.",
+          "Airfryer (1 Korb)": "Airfryer verwenden: Das Hauptgericht wird vollständig im Airfryer zubereitet – KEINE Pfanne, KEIN Backofen parallel. Ein Topf für Beilagen wie Nudeln oder Reis ist erlaubt. Temperatur in °C und Zeit in Minuten präzise angeben. Vorheizen erwähnen. Die Zubereitung muss schlüssig sein – kein unnötiges Wechseln zwischen Geräten.",
+          "Airfryer (2 Körbe)": "Dual-Basket Airfryer verwenden: Hauptkomponente und Beilage werden gleichzeitig in beiden Körben zubereitet – KEINE Pfanne, KEIN Backofen parallel. Ein Topf für Nudeln oder Reis als Beilage ist erlaubt wenn nötig. Für jeden Korb Inhalt, Temperatur und Zeit separat angeben. Zubereitung muss schlüssig sein.",
+          "Thermomix": "Thermomix verwenden: Das Hauptgericht wird vollständig im Thermomix zubereitet – KEINE Pfanne, KEIN Backofen parallel. Alle Schritte mit konkreten TM-Funktionen (z.B. 'Stufe 4, 100°C, 10 Min' oder 'Varoma, Stufe 2, 20 Min'). Nur Rezepte wählen die wirklich im Thermomix funktionieren. Zubereitung muss schlüssig sein.",
         };
         const deviceList = devices.map(d => deviceHints[d] || ("Gerät nutzen: " + d)).join(" | ");
         lines.push("KÜCHENGERÄTE HEUTE: " + deviceList);
