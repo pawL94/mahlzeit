@@ -390,7 +390,11 @@ function IngredientsPage({ onNext, onSkip, onBack, step=1, total=3, title="Was h
     <div style={{ minHeight:"100vh", background:C.bg, padding:"56px 24px 32px", display:"flex", flexDirection:"column" }}>
       {onBack&&<button onClick={onBack} style={{ color:C.textMuted, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>← Zurück</button>}
       <PBar step={step} total={total}/>
-      <div style={{ marginBottom:20 }}><h2 style={{ fontFamily:D, fontSize:28, fontWeight:700, lineHeight:1.2, marginBottom:6 }}>{title}</h2><p style={{ color:C.textMuted, fontSize:14 }}>{subtitle}</p></div>
+      <div style={{ marginBottom:20 }}>
+        <h2 style={{ fontFamily:D, fontSize:28, fontWeight:700, lineHeight:1.2, marginBottom:6 }}>{title}</h2>
+        <p style={{ color:C.textMuted, fontSize:14, marginBottom:4 }}>{subtitle}</p>
+        <p style={{ color:C.textDim, fontSize:12 }}>📷 Bis zu 3 Fotos möglich – z.B. Kühlschrank und Vorratskammer separat scannen</p>
+      </div>
       <IngredientsScreen onNext={onNext} onSkip={onSkip}/>
     </div>
   );
