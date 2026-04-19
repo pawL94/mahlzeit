@@ -602,8 +602,11 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
   // Sync persons if recipe changes (e.g. nope generates new recipe)
   const [scaledRecipe,setScaledRecipe]=useState(null);
   const [scaling,setScaling]=useState(false);
+  const [availOverrides,setAvailOverrides]=useState({});
   const displayRecipe = scaledRecipe || recipe;
   if(!recipe) return null;
+  const toggleAvail=(name)=>setAvailOverrides(p=>({...p,[name]:p[name]!==undefined?!p[name]:!displayRecipe.ingredients.find(i=>i.name===name)?.available}));
+  const getAvail=(ing)=>availOverrides[ing.name]!==undefined?availOverrides[ing.name]:ing.available;
 
   const scaleRecipe=async(newPersons)=>{
     setPersons(newPersons);
@@ -626,7 +629,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
     }catch(e){console.error(e);}
     finally{setScaling(false);}
   };
-  const missing=recipe.ingredients?.filter(i=>!i.available)||[];
+  const missing=displayRecipe.ingredients?.filter(i=>!getAvail(i))||[];
   const allR=[...(profile?.diet||[]),...(profile?.custom||[])];
 
   const handleSave=()=>{
@@ -685,7 +688,13 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
       <div style={{padding:"22px 24px 140px",display:"flex",flexDirection:"column",gap:18}}>
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18}}>
           <h3 style={{fontFamily:D,fontSize:17,marginBottom:14}}>🛒 Zutaten</h3>
-          {displayRecipe.ingredients?.map((ing,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:i<recipe.ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}><span style={{fontSize:14,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span><span style={{fontSize:13,color:C.textMuted}}>{ing.amount}</span></div>))}
+          <p style={{color:C.textDim,fontSize:11,marginBottom:8}}>💡 Antippen um Einkaufsstatus zu ändern</p>
+          {displayRecipe.ingredients?.map((ing,i)=>{const avail=getAvail(ing);return(
+            <div key={i} onClick={()=>toggleAvail(ing.name)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:i<displayRecipe.ingredients.length-1?`1px solid ${C.cardBorder}`:"none",cursor:"pointer"}}>
+              <span style={{fontSize:14,color:avail?C.text:C.accent,transition:"color 0.2s"}}>{avail?"✅":"🛒"} {ing.name}</span>
+              <span style={{fontSize:13,color:C.textMuted}}>{ing.amount}</span>
+            </div>
+          );})}
           {missing.length>0&&(<><button onClick={()=>setShowShopping(!showShopping)} style={{marginTop:12,width:"100%",padding:"10px",borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accentDim}`,color:C.accent,fontSize:13,fontWeight:600,fontFamily:B}}>🛒 Einkaufsliste ({missing.length}) {showShopping?"▲":"▼"}</button>{showShopping&&<div style={{marginTop:10,padding:12,background:C.surface,borderRadius:10}}>{missing.map((ing,i)=><div key={i} style={{fontSize:13,color:C.accent,padding:"4px 0"}}>• {ing.name} – {ing.amount}</div>)}</div>}</>)}
         </div>
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18}}>
