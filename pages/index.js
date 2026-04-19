@@ -1038,9 +1038,6 @@ export default function Mahlzeit() {
       const cuisine=cuisinePool[Math.floor(Math.random()*cuisinePool.length)];
       const reqId=Math.random().toString(36).substring(7);
       const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
-      const mustUseHint=mustUse?.length>0?"PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen (bald ablaufend!): "+mustUse.join(", "):"";
-      if(mustUseHint) lines.push(mustUseHint);
-      if(noShopping) lines.push("KEIN EINKAUF: Nutze nur die vorhandenen Zutaten. Grundzutaten die in jedem Haushalt vorhanden sind darfst du voraussetzen: Salz, Pfeffer, Öl, Butter, Essig, Zucker, Mehl, Gewürze. Alles andere nur aus der Vorratsliste. Nur wenn sich absolut kein sinnvolles Gericht ergibt darf maximal EINE frische Zutat zugekauft werden.");
       const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
         "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
         "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
@@ -1053,6 +1050,8 @@ export default function Mahlzeit() {
       const lines=[availHint];
       if(intolHint) lines.push(intolHint);
       if(disliked?.length>0) lines.push("Heute nicht: "+disliked.join(", "));
+      if(mustUse?.length>0) lines.push("PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen (bald ablaufend!): "+mustUse.join(", "));
+      if(noShopping) lines.push("KEIN EINKAUF: Nutze nur die vorhandenen Zutaten. Grundzutaten wie Salz, Pfeffer, Öl, Butter, Essig, Zucker, Mehl, Gewürze darf die KI voraussetzen. Alles andere nur aus der Vorratsliste.");
       if(nope==="zu_aufwendig") lines.push("Einfacheres Gericht bitte.");
       if(nope==="anderes_gericht") lines.push("VÖLLIG andere Küche: "+cuisine);
       const allAvoided=[...rejectedRecipes,...(lastRecipe?[lastRecipe]:[])];
