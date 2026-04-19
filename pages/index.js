@@ -223,10 +223,12 @@ function SplashScreen({ profiles, onStart, onManageProfiles, onViewSaved, onWeek
 // ── Ingredients (reusable) ────────────────────────────────
 function IngredientsScreen({ onNext, onSkip }) {
   const [input,setInput]=useState(""); const [ingredients,setIngredients]=useState([]);
+  const [mustUse,setMustUse]=useState([]); // ingredients that MUST appear in recipe
   const [scanning,setScanning]=useState(false); const [scanDone,setScanDone]=useState(false); const [scanError,setScanError]=useState(false);
   const [showScanInfo,setShowScanInfo]=useState(false);
   const [pendingInputId,setPendingInputId]=useState(null);
   const [scanCount,setScanCount]=useState(0);
+  const [lastTap,setLastTap]=useState({ing:null,time:0});
   const MAX_SCANS=3;
   const triggerScan=(inputId)=>{
     if(!localStorage.getItem("mz_scan_consent")){setPendingInputId(inputId);setShowScanInfo(true);}
@@ -234,6 +236,16 @@ function IngredientsScreen({ onNext, onSkip }) {
   };
   const add=()=>{const v=input.trim();if(v&&!ingredients.includes(v))setIngredients(p=>[...p,v]);setInput("");};
   const handleKey=e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();add();}};
+  const handleIngredientTap=(ing)=>{
+    const now=Date.now();
+    if(lastTap.ing===ing&&now-lastTap.time<400){
+      // Double tap - toggle mustUse
+      setMustUse(p=>p.includes(ing)?p.filter(x=>x!==ing):[...p,ing]);
+      setLastTap({ing:null,time:0});
+    } else {
+      setLastTap({ing,time:now});
+    }
+  };
   const handleScan=async(e)=>{
     const file=e.target.files?.[0];if(!file)return;
     setScanning(true);setScanDone(false);setScanError(false);
@@ -333,12 +345,25 @@ function IngredientsScreen({ onNext, onSkip }) {
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey} placeholder="Oder manuell eingeben..." style={{flex:1,fontSize:15,padding:"14px 0"}}/>
         {input&&<button onClick={add} style={{background:C.accent,color:"#0f0e0c",borderRadius:8,padding:"6px 14px",fontWeight:700,fontSize:13}}>+</button>}
       </div>
-      {ingredients.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>{ingredients.map(ing=><Chip key={ing} label={ing} onRemove={()=>setIngredients(p=>p.filter(i=>i!==ing))}/>)}</div>}
+      {ingredients.length>0&&(
+        <div style={{marginBottom:14}}>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:6}}>
+            {ingredients.map(ing=>(
+              <span key={ing} onClick={()=>handleIngredientTap(ing)} style={{display:"inline-flex",alignItems:"center",gap:6,background:mustUse.includes(ing)?"rgba(224,90,90,0.15)":C.accentGlow,border:`1px solid ${mustUse.includes(ing)?C.danger:C.accentDim}`,borderRadius:20,padding:"5px 12px",fontSize:13,color:mustUse.includes(ing)?C.danger:C.accent,fontWeight:500,cursor:"pointer",userSelect:"none",transition:"all 0.2s"}}>
+                {mustUse.includes(ing)&&<span style={{fontSize:10}}>&#128308;</span>}{ing}
+                <button onClick={e=>{e.stopPropagation();setIngredients(p=>p.filter(i=>i!==ing));setMustUse(p=>p.filter(x=>x!==ing));}} style={{color:mustUse.includes(ing)?C.danger:C.accentDim,fontSize:16,lineHeight:1}}>x</button>
+              </span>
+            ))}
+          </div>
+          {mustUse.length>0&&<p style={{color:C.danger,fontSize:11,fontWeight:500}}>Rot markierte Zutaten werden im Rezept verwendet</p>}
+        </div>
+      )}
+      <p style={{color:C.textDim,fontSize:11,textAlign:"center",marginBottom:12}}>💡 Tipp: Zutat doppelt antippen = muss im Rezept vorkommen (z.B. für Lebensmittel die bald ablaufen)</p>
       <div style={{marginBottom:24}}><SL>Schnellauswahl</SL><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{sugg.filter(s=>!ingredients.includes(s)).map(s=>(<button key={s} onClick={()=>setIngredients(p=>[...p,s])} style={{background:C.surface,border:`1px solid ${C.cardBorder}`,borderRadius:20,padding:"7px 14px",color:C.textMuted,fontSize:13,fontFamily:B}}>{s}</button>))}</div></div>
       <div style={{flex:1}}/>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <BigBtn label="Weiter →" onClick={()=>onNext(ingredients)} disabled={ingredients.length===0}/>
-        <BigBtn label="Ohne Zutaten entdecken" onClick={onSkip} secondary/>
+        <BigBtn label="Weiter →" onClick={()=>onNext(ingredients,mustUse)} disabled={ingredients.length===0}/>
+        <BigBtn label="Ohne Zutaten entdecken" onClick={()=>onSkip([])} secondary/>
       </div>
     </>
   );
@@ -967,6 +992,7 @@ export default function Mahlzeit() {
   const [profiles,setProfiles]=useState([]);
   const [activeProfile,setActiveProfile]=useState(null);
   const [ingredients,setIngredients]=useState([]);
+  const [mustUse,setMustUse]=useState([]);
   const [disliked,setDisliked]=useState([]);
   const [prefs,setPrefs]=useState(null);
   const [recipe,setRecipe]=useState(null);
@@ -995,6 +1021,8 @@ export default function Mahlzeit() {
       const cuisine=cuisinePool[Math.floor(Math.random()*cuisinePool.length)];
       const reqId=Math.random().toString(36).substring(7);
       const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
+      const mustUseHint=mustUse?.length>0?"PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen (bald ablaufend!): "+mustUse.join(", "):"";
+      if(mustUseHint) lines.push(mustUseHint);
       const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
         "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
         "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
@@ -1074,7 +1102,7 @@ Antworte NUR mit JSON:
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
         {screen==="loading"&&<LoadingScreen streamText={streamText}/>}
-        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
+        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setMustUse([]);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
         {screen==="saved"&&<SavedRecipesScreen profile={savedProfile} profiles={profiles} onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
         {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
         {screen==="week"&&<WeekPlanner profile={activeProfile} onBack={()=>setScreen("splash")}/>}
