@@ -434,16 +434,29 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
 }
 
 // ── Loading ───────────────────────────────────────────────
-function LoadingScreen() {
-  const [step,setStep]=useState(0);
-  const steps=["Analysiere deine Präferenzen...","Kreiere das perfekte Rezept...","Fast fertig..."];
-  useEffect(()=>{const t1=setTimeout(()=>setStep(1),1800);const t2=setTimeout(()=>setStep(2),3500);return()=>{clearTimeout(t1);clearTimeout(t2);};},[]);
+function LoadingScreen({ streamText="" }) {
+  const recipeName = (() => {
+    const match = streamText.match(/"name"\s*:\s*"([^"]+)"/);
+    return match ? match[1] : null;
+  })();
+  const hasDescription = streamText.includes('"description"');
+
   return (
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:`radial-gradient(ellipse at 50% 40%, rgba(245,166,35,0.06) 0%, transparent 60%), ${C.bg}`}}>
       <span style={{fontSize:56,display:"block",marginBottom:32,animation:"bounce 1s ease-in-out infinite"}}>👨‍🍳</span>
-      <h2 style={{fontFamily:D,fontSize:26,fontWeight:700,marginBottom:12}}>Ich koche für dich...</h2>
-      <p style={{color:C.accent,fontSize:14,fontWeight:500,animation:"pulse 1.5s ease-in-out infinite"}}>{steps[step]}</p>
-      <div style={{display:"flex",gap:6,marginTop:32}}>{steps.map((_,i)=><div key={i} style={{width:i<=step?24:8,height:8,borderRadius:4,background:i<=step?C.accent:C.cardBorder,transition:"all 0.4s"}}/>)}</div>
+      <h2 style={{fontFamily:D,fontSize:26,fontWeight:700,marginBottom:16}}>Ich koche für dich...</h2>
+      {recipeName ? (
+        <div style={{animation:"fadeUp 0.4s ease"}}>
+          <p style={{color:C.textMuted,fontSize:13,marginBottom:6}}>Dein Gericht heute:</p>
+          <p style={{color:C.accent,fontSize:20,fontWeight:700,fontFamily:D,marginBottom:4}}>{recipeName}</p>
+          {hasDescription && <p style={{color:C.textMuted,fontSize:13,animation:"pulse 1.5s ease-in-out infinite"}}>Rezept wird zusammengestellt...</p>}
+        </div>
+      ) : (
+        <p style={{color:C.accent,fontSize:14,fontWeight:500,animation:"pulse 1.5s ease-in-out infinite"}}>Analysiere deine Präferenzen...</p>
+      )}
+      <div style={{display:"flex",gap:6,marginTop:32}}>
+        {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:4,background:C.accent,animation:`pulse ${1+i*0.3}s ease-in-out infinite`,animationDelay:`${i*0.2}s`}}/>)}
+      </div>
     </div>
   );
 }
@@ -865,6 +878,7 @@ export default function Mahlzeit() {
   const [disliked,setDisliked]=useState([]);
   const [prefs,setPrefs]=useState(null);
   const [recipe,setRecipe]=useState(null);
+  const [streamText,setStreamText]=useState("");
   const [rejectedRecipes,setRejectedRecipes]=useState([]);
   const [viewingRecipe,setViewingRecipe]=useState(null);
   const [savedProfile,setSavedProfile]=useState(null);
@@ -879,10 +893,73 @@ export default function Mahlzeit() {
     const lastRecipe = nope && recipe ? recipe.name : null;
     // Track all rejected recipes this session
     if(nope && recipe) setRejectedRecipes(prev=>[...new Set([...prev, recipe.name])]);
+    setStreamText("");
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,avoidNames:[...rejectedRecipes,...(lastRecipe?[lastRecipe]:[])],preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt",devices:finalPrefs.devices||[]})});
-      const data=await resp.json();
-      if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
+      // Build prompt inline for streaming endpoint
+      const timeMap={"Schnell":"maximal 15 Minuten","Normal":"maximal 30 Minuten","Gemütlich":"60 bis 90 Minuten"};
+      const timeLimit=timeMap[finalPrefs.time]||"maximal 30 Minuten";
+      const allCuisines=["Italienisch","Asiatisch","Mexikanisch","Mediterran","Deutsch","Indisch","Amerikanisch","Französisch","Griechisch","Japanisch","Marokkanisch","Türkisch","Spanisch","Koreanisch","Vietnamesisch","Libanesisch"];
+      const cuisinePool=(activeProfile?.cuisines?.length>0)?activeProfile.cuisines:allCuisines;
+      const cuisine=cuisinePool[Math.floor(Math.random()*cuisinePool.length)];
+      const reqId=Math.random().toString(36).substring(7);
+      const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
+      const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
+        "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
+        "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
+        "Vegetarisch":"Kein Fleisch, kein Fisch","Vegan":"Keine tierischen Produkte",
+        "Kein Fleisch":"Kein Fleisch","Kein Fisch":"Kein Fisch",
+        "Kein Schweinefleisch":"Kein Schweinefleisch","Nussallergie":"Keine Nüsse",
+        "Eierallergie":"Keine Eier","Sojaallergie":"Kein Soja","Keine Meeresfrüchte":"Keine Meeresfrüchte",
+      }[i]||"Vermeiden: "+i)).join(" | "):"";
+      const availHint=activeProfile?.availability==="supermarkt"?"Nur Zutaten aus normalem Supermarkt.":activeProfile?.availability==="markt"?"Gut sortierter Supermarkt ok.":"Alle Zutaten erlaubt.";
+      const lines=[availHint];
+      if(intolHint) lines.push(intolHint);
+      if(disliked?.length>0) lines.push("Heute nicht: "+disliked.join(", "));
+      if(nope==="zu_aufwendig") lines.push("Einfacheres Gericht bitte.");
+      if(nope==="anderes_gericht") lines.push("VÖLLIG andere Küche: "+cuisine);
+      const allAvoided=[...rejectedRecipes,...(lastRecipe?[lastRecipe]:[])];
+      if(allAvoided.length>0) lines.push("NICHT: "+allAvoided.join(", "));
+      if(loved.length>0) lines.push("Lieblingsgerichte (Stil nutzen, nicht wiederholen): "+loved.join(", "));
+      if(finalPrefs.devices?.length>0) lines.push("Gerät: "+finalPrefs.devices.join(", "));
+      const prompt=`Du bist ein kreativer Küchenchef. [${reqId}]
+
+Zutaten: ${ingList}
+ZEITLIMIT: ${timeLimit}
+Stimmung: ${finalPrefs.mood} | Personen: ${finalPrefs.portion}
+${lines.join("\n")}
+
+REGELN:
+1. Zeitlimit ${timeLimit} einhalten.
+2. Max 1-2 Zutaten nutzen.
+3. available:true NUR wenn Zutat exakt in Liste steht.
+4. Küche: ${nope==="anderes_gericht"?cuisine+" – PFLICHT!":cuisine}
+5. Kreativ, kein 08/15-Gericht.
+6. Zutaten nicht still ersetzen.
+7. Unverträglichkeiten haben absolute Priorität.
+
+Antworte NUR mit JSON:
+{"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
+
+      const resp=await fetch("/api/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+      const reader=resp.body.getReader();
+      const decoder=new TextDecoder();
+      let fullText="";
+      let buf="";
+      while(true){
+        const {done,value}=await reader.read();
+        if(done) break;
+        buf+=decoder.decode(value,{stream:true});
+        const lines2=buf.split("\n");
+        buf=lines2.pop()||"";
+        for(const line of lines2){
+          if(line.startsWith("data: ")){
+            try{const d=JSON.parse(line.slice(6));if(d.text){fullText+=d.text;setStreamText(fullText);}}catch(e){}
+          }
+          if(line.startsWith("event: error")) throw new Error("Stream error");
+        }
+      }
+      const recipe=JSON.parse(fullText.replace(/```json|```/g,"").trim());
+      setRecipe(recipe);setScreen("recipe");
     }catch(err){
       setRecipe({name:"Pasta Aglio e Olio",emoji:"🍝",description:"Klassisch italienisch. Wenige Zutaten, maximaler Geschmack.",time:"20 Min",difficulty:"Einfach",calories:"ca. 420 kcal",ingredients:[{name:"Spaghetti",amount:"200g",available:true},{name:"Knoblauch",amount:"4 Zehen",available:true},{name:"Olivenöl",amount:"4 EL",available:false},{name:"Petersilie",amount:"1 Bund",available:false}],steps:["Pasta al dente kochen.","Knoblauch in Öl goldbraun anbraten.","Pasta abgießen, Kochwasser aufheben.","Alles vermengen und servieren."],tip:"Das Kochwasser macht die Sauce cremig!"});
       setScreen("recipe");
@@ -904,8 +981,8 @@ export default function Mahlzeit() {
         {screen==="ingredients"&&<IngredientsPage onNext={ings=>{setIngredients(ings);setScreen("disliked");}} onSkip={()=>{setIngredients([]);setScreen("disliked");}}/>}
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
-        {screen==="loading"&&<LoadingScreen/>}
-        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setRejectedRecipes([]);setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
+        {screen==="loading"&&<LoadingScreen streamText={streamText}/>}
+        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
         {screen==="saved"&&<SavedRecipesScreen profile={savedProfile} profiles={profiles} onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
         {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
         {screen==="week"&&<WeekPlanner profile={activeProfile} onBack={()=>setScreen("splash")}/>}
