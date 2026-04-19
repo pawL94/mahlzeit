@@ -3,12 +3,14 @@ import Head from "next/head";
 
 // ── Design Tokens ─────────────────────────────────────────
 const C = {
-  bg:"#0f0e0c", card:"#1a1815", cardBorder:"#2a2620",
-  accent:"#f5a623", accentDim:"#c47d0e", accentGlow:"rgba(245,166,35,0.15)",
-  text:"#f0ebe3", textMuted:"#8a8070", textDim:"#4a4438", surface:"#221f1a",
-  danger:"#e05a5a", dangerGlow:"rgba(224,90,90,0.15)",
-  green:"#5ab97a", greenGlow:"rgba(90,185,122,0.12)",
-  purple:"#a78bfa", purpleGlow:"rgba(167,139,250,0.12)",
+  bg:"#FEFCF7", card:"#FFFFFF", cardBorder:"#EAE2D6",
+  accent:"#D97706", accentDim:"#B45309", accentGlow:"rgba(217,119,6,0.10)",
+  text:"#1C1410", textMuted:"#6B5E52", textDim:"#B0A396", surface:"#F5F0E8",
+  danger:"#DC2626", dangerGlow:"rgba(220,38,38,0.08)",
+  green:"#16A34A", greenGlow:"rgba(22,163,74,0.10)",
+  purple:"#7C3AED", purpleGlow:"rgba(124,58,237,0.10)",
+  shadow:"0 2px 12px rgba(28,20,16,0.08)",
+  shadowMd:"0 4px 24px rgba(28,20,16,0.12)",
 };
 const D = "'Playfair Display', serif";
 const B = "'DM Sans', sans-serif";
@@ -93,7 +95,7 @@ const TagToggle = ({ label, emoji, selected, color, glowColor, onClick }) => (
 const SL = ({ children }) => <p style={{ color:C.textMuted, fontSize:11, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>{children}</p>;
 
 const BigBtn = ({ label, onClick, disabled, secondary, color }) => (
-  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?"transparent":disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?C.textDim:"#0f0e0c", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 8px 32px rgba(245,166,35,0.2)":"none", transition:"all 0.2s" }}>
+  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?"transparent":disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?C.textDim:"#0f0e0c", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 4px 20px rgba(217,119,6,0.28)":"none", transition:"all 0.2s" }}>
     {label}
   </button>
 );
@@ -218,7 +220,7 @@ function SplashScreen({ profiles, onStart, onQuickStart, onManageProfiles, onVie
   const moodEmoji = { "Herzhaft":"🥩", "Leicht":"🥗", "Dessert":"🍰", "Überrasch mich!":"🎲" };
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(ellipse at 60% 10%, rgba(245,166,35,0.1) 0%, transparent 55%), ${C.bg}`, padding:"48px 24px 40px", display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100vh", background:`radial-gradient(ellipse at 60% 10%, rgba(217,119,6,0.08) 0%, transparent 55%), ${C.bg}`, padding:"48px 24px 40px", display:"flex", flexDirection:"column" }}>
 
       {/* Header */}
       <div style={{ textAlign:"center", marginBottom:28 }}>
@@ -265,7 +267,7 @@ function SplashScreen({ profiles, onStart, onQuickStart, onManageProfiles, onVie
       )}
 
       {/* Main actions */}
-      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#0f0e0c", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(245,166,35,0.25)", marginBottom:10 }}>
+      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#FFFFFF", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(245,166,35,0.25)", marginBottom:10 }}>
         Rezept finden →
       </button>
       <button onClick={()=>onWeekPlanner(active)} style={{ background:C.card, border:`1.5px solid ${C.cardBorder}`, color:C.text, fontWeight:600, fontSize:15, padding:"14px", borderRadius:50, fontFamily:B, marginBottom:16 }}>
@@ -343,7 +345,7 @@ function IngredientsScreen({ onNext, onSkip }) {
             <p style={{color:C.textMuted,fontSize:14,lineHeight:1.7,marginBottom:16}}>Das Foto wird kurz an <strong style={{color:C.text}}>Anthropic</strong> (USA) übermittelt um die Zutaten zu erkennen. Es wird danach <strong style={{color:C.text}}>nicht gespeichert</strong>.</p>
             <p style={{color:C.textMuted,fontSize:14,lineHeight:1.7,marginBottom:24}}>Du kannst Zutaten jederzeit auch manuell eingeben.</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <button onClick={()=>{localStorage.setItem("mz_scan_consent","true");setShowScanInfo(false);setTimeout(()=>document.getElementById(pendingInputId||"scan-camera").click(),100);}} style={{width:"100%",padding:"15px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,fontFamily:B}}>Verstanden, weiter</button>
+              <button onClick={()=>{localStorage.setItem("mz_scan_consent","true");setShowScanInfo(false);setTimeout(()=>document.getElementById(pendingInputId||"scan-camera").click(),100);}} style={{width:"100%",padding:"15px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B}}>Verstanden, weiter</button>
               <button onClick={()=>setShowScanInfo(false)} style={{width:"100%",padding:"14px",borderRadius:50,background:"transparent",border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontFamily:B}}>Abbrechen</button>
             </div>
           </div>
@@ -378,7 +380,7 @@ function IngredientsScreen({ onNext, onSkip }) {
       {/* Manual input */}
       <div style={{background:C.card,border:`1.5px solid ${C.cardBorder}`,borderRadius:16,padding:"4px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey} placeholder="Zutat manuell eingeben..." style={{flex:1,fontSize:15,padding:"13px 0",fontFamily:B}}/>
-        {input&&<button onClick={add} style={{background:C.accent,color:"#0f0e0c",borderRadius:8,padding:"5px 12px",fontWeight:700,fontSize:13}}>+</button>}
+        {input&&<button onClick={add} style={{background:C.accent,color:"#FFFFFF",borderRadius:8,padding:"5px 12px",fontWeight:700,fontSize:13}}>+</button>}
       </div>
 
       {/* Ingredient chips */}
@@ -443,10 +445,10 @@ function IngredientsPage({ onNext, onSkip, onBack }) {
 }
 
 // ── Combined Preferences + Disliked Screen ────────────────
-function PreferencesScreen({ profile, onGenerate, onBack, step=2, total=2 }) {
-  const [time, setTime] = useState(null);
-  const [mood, setMood] = useState(null);
-  const [persons, setPersons] = useState(()=>loadPersons(profile?.id));
+function PreferencesScreen({ profile, onGenerate, onBack, step=2, total=2, defaultPrefs }) {
+  const [time, setTime] = useState(defaultPrefs?.time||null);
+  const [mood, setMood] = useState(defaultPrefs?.mood||null);
+  const [persons, setPersons] = useState(defaultPrefs?.portion||loadPersons(profile?.id));
   const [devices, setDevices] = useState([]);
   const [disliked, setDisliked] = useState([]);
   const [customDis, setCustomDis] = useState([]);
@@ -465,6 +467,7 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=2, total=2 }) {
       <div style={{marginBottom:22}}>
         <h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4}}>Wie ist deine Stimmung?</h2>
         {profile&&<p style={{color:C.accent,fontSize:13}}>{profile.emoji} {profile.name}</p>}
+        {defaultPrefs&&<div style={{marginTop:8,display:"flex",alignItems:"center",gap:6,padding:"6px 12px",background:C.greenGlow,borderRadius:20,border:`1px solid ${C.green}`,width:"fit-content"}}><span style={{fontSize:12}}>⚡</span><p style={{color:C.green,fontSize:12,fontWeight:600}}>Letzte Einstellungen vorausgefüllt</p></div>}
       </div>
 
       <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -579,7 +582,7 @@ function LoadingScreen({ streamText="" }) {
   const tip = parseStreamField(streamText, "tip");
 
   if(!name) return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:`radial-gradient(ellipse at 50% 40%, rgba(245,166,35,0.06) 0%, transparent 60%), ${C.bg}`}}>
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:C.bg}}>
       <span style={{fontSize:52,display:"block",marginBottom:24,animation:"bounce 1s ease-in-out infinite"}}>👨‍🍳</span>
       <h2 style={{fontFamily:D,fontSize:24,fontWeight:700,marginBottom:10}}>Ich koche für dich...</h2>
       <p style={{color:C.accent,fontSize:14,fontWeight:500,animation:"pulse 1.5s ease-in-out infinite"}}>Analysiere deine Präferenzen...</p>
@@ -589,7 +592,7 @@ function LoadingScreen({ streamText="" }) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,overflowY:"auto"}}>
-      <div style={{background:"linear-gradient(180deg,rgba(245,166,35,0.1) 0%,transparent 100%)",padding:"60px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`,animation:"fadeUp 0.4s ease"}}>
+      <div style={{background:"linear-gradient(180deg,rgba(217,119,6,0.06) 0%,transparent 100%)",padding:"60px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`,animation:"fadeUp 0.4s ease"}}>
         <p style={{color:C.accent,fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>🎯 Dein Rezept</p>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
           <h1 style={{fontFamily:D,fontSize:26,fontWeight:700,lineHeight:1.2,flex:1,paddingRight:14}}>{name}</h1>
@@ -614,7 +617,7 @@ function LoadingScreen({ streamText="" }) {
         {steps&&(
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,animation:"fadeUp 0.3s ease"}}>
             <h3 style={{fontFamily:D,fontSize:16,marginBottom:12}}>👨‍🍳 Zubereitung</h3>
-            {steps.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#0f0e0c",flexShrink:0}}>{i+1}</div><p style={{fontSize:13,color:C.textMuted,lineHeight:1.6,paddingTop:3}}>{step}</p></div>))}
+            {steps.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:13,color:C.textMuted,lineHeight:1.6,paddingTop:3}}>{step}</p></div>))}
           </div>
         )}
         {tip&&<div style={{background:C.accentGlow,border:`1px solid ${C.accentDim}`,borderRadius:12,padding:12,animation:"fadeUp 0.3s ease"}}><p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>💡 <strong>Tipp:</strong> {tip}</p></div>}
@@ -666,7 +669,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 
   return (
     <div style={{minHeight:"100vh",background:C.bg}}>
-      <div style={{background:"linear-gradient(180deg,rgba(245,166,35,0.1) 0%,transparent 100%)",padding:"56px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`}}>
+      <div style={{background:"linear-gradient(180deg,rgba(217,119,6,0.06) 0%,transparent 100%)",padding:"56px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`}}>
         <button onClick={onBack} style={{color:C.textMuted,fontSize:14,display:"flex",alignItems:"center",gap:5,marginBottom:14,fontFamily:B}}>← Einstellungen ändern</button>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
           <div style={{flex:1,paddingRight:14}}>
@@ -725,7 +728,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
         {/* Steps */}
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16}}>
           <h3 style={{fontFamily:D,fontSize:16,marginBottom:14}}>👨‍🍳 Zubereitung</h3>
-          {displayRecipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<displayRecipe.steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#0f0e0c",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:2}}>{step}</p></div>))}
+          {displayRecipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<displayRecipe.steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:2}}>{step}</p></div>))}
         </div>
 
         {displayRecipe.tip&&<div style={{background:C.accentGlow,border:`1px solid ${C.accentDim}`,borderRadius:12,padding:12}}><p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>💡 <strong>Tipp:</strong> {displayRecipe.tip}</p></div>}
@@ -733,8 +736,8 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 
       {/* Bottom bar */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`linear-gradient(0deg,${C.bg} 60%,transparent)`,padding:"14px 24px 34px",display:"flex",gap:10,maxWidth:430,margin:"0 auto"}}>
-        <button onClick={()=>setShowNope(true)} style={{flex:1,padding:"14px",borderRadius:50,border:`1.5px solid ${C.cardBorder}`,background:C.card,color:C.textMuted,fontWeight:600,fontSize:14,fontFamily:B}}>Andere Idee</button>
-        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(245,166,35,0.28)"}}>Fertig kochen ✓</button>
+        <button onClick={()=>setShowNope(true)} style={{flex:1,padding:"14px",borderRadius:50,border:`1.5px solid ${C.accent}`,background:C.accentGlow,color:C.accent,fontWeight:700,fontSize:14,fontFamily:B}}>🔄 Neuer Vorschlag</button>
+        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(245,166,35,0.28)"}}>Fertig ✓</button>
       </div>
 
       {/* Nope sheet */}
@@ -742,7 +745,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:100}} onClick={()=>setShowNope(false)}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"24px 24px 0 0",padding:"24px 24px 48px",width:"100%",border:`1px solid ${C.cardBorder}`,maxWidth:430,margin:"0 auto"}}>
             <div style={{width:36,height:4,borderRadius:2,background:C.cardBorder,margin:"0 auto 20px"}}/>
-            <h3 style={{fontFamily:D,fontSize:19,marginBottom:5}}>Andere Idee gefällig?</h3>
+            <h3 style={{fontFamily:D,fontSize:19,marginBottom:5}}>Andere Idee?</h3>
             <p style={{color:C.textMuted,fontSize:13,marginBottom:18}}>Was passt dir nicht?</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[{label:"Zu aufwendig",desc:"Zeig mir etwas Einfacheres",emoji:"😌",reason:"zu_aufwendig"},{label:"Anderes Gericht",desc:"Komplett andere Richtung",emoji:"🔄",reason:"anderes_gericht"}].map(({label,desc,emoji,reason})=>(
@@ -858,7 +861,7 @@ function SavedRecipesScreen({ profile, profiles, onBack, onOpen }) {
                   </div>
                 )}
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <button onClick={()=>onOpen(r)} style={{flex:1,padding:"9px",borderRadius:12,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:13,fontFamily:B}}>Rezept öffnen →</button>
+                  <button onClick={()=>onOpen(r)} style={{flex:1,padding:"9px",borderRadius:12,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:13,fontFamily:B}}>Rezept öffnen →</button>
                   {others.length>0&&<button onClick={()=>setMoveTarget(moveTarget?.id===r.id?null:r)} style={{padding:"9px 12px",borderRadius:12,background:C.purpleGlow,color:C.purple,fontSize:13,fontFamily:B,border:`1px solid ${C.purple}`}}>↗️</button>}
                   <button onClick={()=>update(recipes.filter(x=>x.id!==r.id))} style={{padding:"9px 12px",borderRadius:12,background:C.dangerGlow,color:C.danger,fontSize:13,fontFamily:B}}>🗑</button>
                 </div>
@@ -1103,7 +1106,7 @@ export default function Mahlzeit() {
       if(loved.length>0) lines.push("Lieblingsgerichte (Stil nutzen, nicht wiederholen): "+loved.join(", "));
       if(finalPrefs.devices?.length>0) lines.push("Gerät: "+finalPrefs.devices.join(", "));
 
-      const prompt=`Du bist ein kreativer Küchenchef. [${reqId}]\n\nZutaten: ${ingList}\nZEITLIMIT: ${timeLimit}\nStimmung: ${finalPrefs.mood} | Personen: ${finalPrefs.portion}\n${lines.join("\n")}\n\nREGELN:\n1. Zeitlimit ${timeLimit} einhalten.\n2. Max 1-2 Zutaten nutzen.\n3. available:true NUR wenn Zutat exakt in Liste steht.\n4. Küche: ${nope==="anderes_gericht"?cuisine+" – PFLICHT!":cuisine}\n5. Kreativ, kein 08/15-Gericht.\n6. Zutaten nicht still ersetzen.\n7. Unverträglichkeiten haben absolute Priorität.\n8. PORTIONSMENGEN: Realistische Haushaltsmengen – z.B. 80-100g Pasta, 150g Fleisch pro Person.\n\nAntworte NUR mit JSON:\n{"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
+      const prompt=`Du bist ein kreativer Küchenchef. [${reqId}]\n\nZutaten: ${ingList}\nZEITLIMIT: ${timeLimit}\nStimmung: ${finalPrefs.mood} | Personen: ${finalPrefs.portion}\n${lines.join("\n")}\n\nREGELN:\n1. Zeitlimit ${timeLimit} einhalten.\n2. Max 1-2 Zutaten nutzen.\n3. available:true NUR wenn Zutat exakt in der Zutatenliste des Nutzers steht. Wenn keine Zutaten angegeben wurden ist available IMMER false.\n4. Küche: ${nope==="anderes_gericht"?cuisine+" – PFLICHT!":cuisine}\n5. Kreativ, kein 08/15-Gericht.\n6. Zutaten nicht still ersetzen.\n7. Unverträglichkeiten haben absolute Priorität.\n8. PORTIONSMENGEN: Realistische Haushaltsmengen – z.B. 80-100g Pasta, 150g Fleisch pro Person.\n\nAntworte NUR mit JSON:\n{"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
 
       const resp = await fetch("/api/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
       const reader = resp.body.getReader();
@@ -1154,12 +1157,12 @@ export default function Mahlzeit() {
       <Head>
         <title>Mahlzeit</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-        <meta name="theme-color" content="#f5a623"/>
+        <meta name="theme-color" content="#D97706"/>
         <link rel="manifest" href="/manifest.json"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
         <style>{`
           * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-          body { background:#0f0e0c; color:#f0ebe3; font-family:'DM Sans',sans-serif; }
+          body { background:#FEFCF7; color:#1C1410; font-family:'DM Sans',sans-serif; }
           input, button, textarea { background:none; border:none; outline:none; color:inherit; cursor:pointer; }
           @keyframes spin { to { transform:rotate(360deg); } }
           @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -1170,10 +1173,10 @@ export default function Mahlzeit() {
         `}</style>
       </Head>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,overflowX:"hidden"}}>
-        {screen==="splash"&&<SplashScreen profiles={profiles} lastSession={lastSession} onStart={(p)=>{setActiveProfile(p);setScreen("ingredients");}} onQuickStart={(p,session)=>{setActiveProfile(p);setPrefs(session);callAPI(session);}} onManageProfiles={()=>setScreen("profiles")} onViewSaved={(p)=>{setSavedProfile(p);setScreen("saved");}} onWeekPlanner={(p)=>{setActiveProfile(p);setScreen("week");}}/>}
+        {screen==="splash"&&<SplashScreen profiles={profiles} lastSession={lastSession} onStart={(p)=>{setActiveProfile(p);setScreen("ingredients");}} onQuickStart={(p,session)=>{setActiveProfile(p);setPrefs(session);setScreen("ingredients");}} onManageProfiles={()=>setScreen("profiles")} onViewSaved={(p)=>{setSavedProfile(p);setScreen("saved");}} onWeekPlanner={(p)=>{setActiveProfile(p);setScreen("week");}}/>}
         {screen==="profiles"&&<ProfileManager profiles={profiles} onSave={saveProfiles} onBack={()=>setScreen("splash")}/>}
         {screen==="ingredients"&&<IngredientsPage onNext={(ings,must,noShop)=>{setIngredients(ings);setMustUse(must||[]);setNoShopping(noShop||false);setScreen("preferences");}} onSkip={(ings,noShop)=>{setIngredients([]);setMustUse([]);setNoShopping(false);setScreen("preferences");}}/>}
-        {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("ingredients")}/>}
+        {screen==="preferences"&&<PreferencesScreen profile={activeProfile} defaultPrefs={prefs} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="loading"&&<LoadingScreen streamText={streamText}/>}
         {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={prefs?.disliked||[]} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setMustUse([]);setNoShopping(false);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}} onRate={handleRate}/>}
         {screen==="streamError"&&(
@@ -1181,7 +1184,7 @@ export default function Mahlzeit() {
             <span style={{fontSize:48,marginBottom:20}}>😕</span>
             <h2 style={{fontFamily:D,fontSize:24,fontWeight:700,marginBottom:10}}>Etwas ist schiefgelaufen</h2>
             <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:28,maxWidth:280}}>Das Rezept konnte nicht geladen werden – meistens liegt das an einer instabilen Verbindung.</p>
-            <button onClick={()=>{setStreamText("");callAPI(prefs);}} style={{background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,padding:"15px 40px",borderRadius:50,fontFamily:B,marginBottom:12}}>🔄 Nochmal versuchen</button>
+            <button onClick={()=>{setStreamText("");callAPI(prefs);}} style={{background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,padding:"15px 40px",borderRadius:50,fontFamily:B,marginBottom:12}}>🔄 Nochmal versuchen</button>
             <button onClick={()=>{setStreamText("");setScreen("preferences");}} style={{color:C.textMuted,fontSize:14,padding:"10px",fontFamily:B}}>← Einstellungen ändern</button>
           </div>
         )}
