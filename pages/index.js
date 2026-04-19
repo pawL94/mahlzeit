@@ -61,7 +61,7 @@ const PBar = ({ step, total }) => (
 const Spin = ({ size=28 }) => <div style={{ width:size, height:size, borderRadius:"50%", border:`3px solid ${C.cardBorder}`, borderTopColor:C.accent, animation:"spin 0.8s linear infinite", flexShrink:0 }}/>;
 
 const DIET = [
-  {l:"Vegetarisch",e:"🥦"},{l:"Vegan",e:"🌱"},{l:"Kein Fleisch",e:"🚫"},
+  {l:"Vegetarisch",e:"🥦"},{l:"Vegan",e:"🌱"},
   {l:"Kein Fisch",e:"🐟"},{l:"Kein Schweinefleisch",e:"🐷"},{l:"Low Carb",e:"🥑"},
   {l:"Glutenfrei",e:"🌾"},{l:"Laktosefrei",e:"🥛"},{l:"Nussallergie",e:"🥜"},
   {l:"Eierallergie",e:"🥚"},{l:"Sojaallergie",e:"🫘"},{l:"Keine Meeresfrüchte",e:"🦐"},
@@ -106,7 +106,7 @@ function ProfileEditor({ profile, onSave, onCancel, isNew }) {
       <div style={{ marginBottom:20 }}>
         <SL>Avatar</SL>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-          {EMOJIS.map(e=>(<button key={e} onClick={()=>setEmoji(e)} style={{ width:44, height:44, borderRadius:12, fontSize:22, border:`2px solid ${emoji===e?C.accent:C.cardBorder}`, background:emoji===e?C.accentGlow:C.card }}>{e}</button>))}
+          {EMOJIS.map(e=>(<button key={e} onClick={()=>setEmoji(e)} style={{ width:44, height:44, borderRadius:12, fontSize:22, border:`2px solid ${emoji===e?C.accent:C.cardBorder}`, background:emoji===e?C.accentGlow:C.card, color:"inherit", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center" }}>{e}</button>))}
         </div>
       </div>
       <div style={{ marginBottom:20 }}>
@@ -421,7 +421,7 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
       <div style={{ marginBottom:26 }}><h2 style={{ fontFamily:D, fontSize:28, fontWeight:700, lineHeight:1.2, marginBottom:6 }}>Wie ist deine Stimmung?</h2>{profile&&<p style={{color:C.accent,fontSize:13}}>{profile.emoji} {profile.name}</p>}</div>
       <div style={{display:"flex",flexDirection:"column",gap:22}}>
         <div><SL>⏱ Wie viel Zeit hast du?</SL><div style={{display:"flex",gap:8}}>{[["Schnell","⚡","≤15 Min"],["Normal","🕐","30 Min"],["Gemütlich","🌿","60+ Min"]].map(([l,e,s])=>(<button key={l} onClick={()=>setTime(l)} style={{flex:1,padding:"13px 8px",borderRadius:14,fontFamily:B,border:`1.5px solid ${time===l?C.accent:C.cardBorder}`,background:time===l?C.accentGlow:C.card,color:time===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:22}}>{e}</span><span style={{fontWeight:600}}>{l}</span><span style={{fontSize:11,opacity:0.7}}>{s}</span></button>))}</div></div>
-        <div><SL>🍽 Worauf hast du Hunger?</SL><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[["Herzhaft","🥩"],["Leicht","🥗"],["Comfort","🫕"],["Überrasch mich!","🎲"]].map(([l,e])=>(<button key={l} onClick={()=>setMood(l)} style={{flex:1,minWidth:"45%",padding:"12px 6px",borderRadius:14,fontFamily:B,border:`1.5px solid ${mood===l?C.accent:C.cardBorder}`,background:mood===l?C.accentGlow:C.card,color:mood===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>{e}</span>{l}</button>))}</div></div>
+        <div><SL>🍽 Worauf hast du Hunger?</SL><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[["Herzhaft","🥩"],["Leicht","🥗"],["Herzhaft & warm","🫕"],["Überrasch mich!","🎲"]].map(([l,e])=>(<button key={l} onClick={()=>setMood(l)} style={{flex:1,minWidth:"45%",padding:"12px 6px",borderRadius:14,fontFamily:B,border:`1.5px solid ${mood===l?C.accent:C.cardBorder}`,background:mood===l?C.accentGlow:C.card,color:mood===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>{e}</span>{l}</button>))}</div></div>
 
       </div>
       <div style={{marginTop:8}}>
@@ -1027,7 +1027,7 @@ export default function Mahlzeit() {
         "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
         "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
         "Vegetarisch":"Kein Fleisch, kein Fisch","Vegan":"Keine tierischen Produkte",
-        "Kein Fleisch":"Kein Fleisch","Kein Fisch":"Kein Fisch",
+        "Kein Fisch":"Kein Fisch",
         "Kein Schweinefleisch":"Kein Schweinefleisch","Nussallergie":"Keine Nüsse",
         "Eierallergie":"Keine Eier","Sojaallergie":"Kein Soja","Keine Meeresfrüchte":"Keine Meeresfrüchte",
       }[i]||"Vermeiden: "+i)).join(" | "):"";
