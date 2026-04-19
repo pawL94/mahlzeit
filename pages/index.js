@@ -399,7 +399,7 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
         <div><SL>🍽 Worauf hast du Hunger?</SL><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[["Herzhaft","🥩"],["Leicht","🥗"],["Comfort","🫕"],["Überrasch mich!","🎲"]].map(([l,e])=>(<button key={l} onClick={()=>setMood(l)} style={{flex:1,minWidth:"45%",padding:"12px 6px",borderRadius:14,fontFamily:B,border:`1.5px solid ${mood===l?C.accent:C.cardBorder}`,background:mood===l?C.accentGlow:C.card,color:mood===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>{e}</span>{l}</button>))}</div></div>
 
       </div>
-      <div>
+      <div style={{marginTop:8}}>
         <SL>👥 Für wie viele Personen?</SL>
         <div style={{display:"flex",gap:6}}>
           {[1,2,3,4,5,6,7,8].map(n=>(
@@ -467,7 +467,16 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
     try{
       const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"scale",recipe,fromPersons:recipe.persons||2,toPersons:newPersons})});
       const data=await resp.json();
-      if(data.recipe) setScaledRecipe({...data.recipe,persons:newPersons});
+      if(data.recipe){
+        // Preserve available status from original recipe by ingredient name
+        const availMap = {};
+        recipe.ingredients.forEach(i=>{ availMap[i.name.toLowerCase()]=i.available; });
+        const fixedIngredients = data.recipe.ingredients.map(i=>({
+          ...i,
+          available: availMap[i.name.toLowerCase()] ?? i.available
+        }));
+        setScaledRecipe({...data.recipe,ingredients:fixedIngredients,persons:newPersons});
+      }
     }catch(e){console.error(e);}
     finally{setScaling(false);}
   };
@@ -507,8 +516,13 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"12px 16px",marginBottom:(allR.length||disliked?.length)?12:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <p style={{fontSize:13,fontWeight:600,color:C.text}}>👥 Personen</p>
-            <div style={{display:"flex",alignItems:"center",gap:4}}>
-              {scaling&&<div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${C.accentDim}`,borderTopColor:C.accent,animation:"spin 0.8s linear infinite"}}/>}
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              {scaling&&(
+                <div style={{display:"flex",alignItems:"center",gap:5,background:C.accentGlow,borderRadius:20,padding:"3px 10px"}}>
+                  <div style={{width:12,height:12,borderRadius:"50%",border:`2px solid ${C.accentDim}`,borderTopColor:C.accent,animation:"spin 0.8s linear infinite"}}/>
+                  <p style={{fontSize:11,color:C.accent,fontWeight:600}}>Mengen werden angepasst...</p>
+                </div>
+              )}
               <p style={{fontSize:15,fontWeight:700,color:C.accent,minWidth:20,textAlign:"center"}}>{persons}</p>
             </div>
           </div>
