@@ -55,16 +55,7 @@ export default async function handler(req, res) {
     if (type === "scan") {
       const { base64, mimeType } = params;
       const text = await callClaudeWithImage(
-        'Analysiere dieses Foto eines Kühlschranks oder einer Vorratskammer sehr sorgfältig.
-
-WICHTIG:
-1. Lies ALLE sichtbaren Texte auf Verpackungen, Etiketten und Aufklebern genau durch
-2. Erkenne konkrete Produktnamen: "Mozzarella" nicht "Käse", "Parmesan" nicht "Käse", "Feta" nicht "Käse"
-3. Schau auch in Ecken, auf Seitenwände, in Schubladen und Fächer
-4. Erkenne auch teilweise sichtbare Verpackungen
-5. Bei unlesbaren Etiketten: beschreibe was du siehst (z.B. "Joghurt" wenn du einen Joghurtbecher siehst)
-
-Antworte NUR mit JSON-Array auf Deutsch: ["Mozzarella","Hafermilch","Karotten"]. Kein Markdown, keine Erklärungen.',
+        'Analysiere dieses Foto eines Kühlschranks sehr sorgfältig. Lies ALLE sichtbaren Texte auf Verpackungen und Etiketten. Erkenne konkrete Produktnamen: Mozzarella nicht Kaese, Parmesan nicht Kaese, Feta nicht Kaese. Schau auch in Ecken und Schubladen. Antworte NUR mit JSON-Array auf Deutsch: ["Mozzarella","Hafermilch","Karotten"]. Kein Markdown.',
         base64, mimeType
       );
       const found = JSON.parse(text.replace(/```json|```/g, "").trim());
