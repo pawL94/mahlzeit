@@ -3,14 +3,15 @@ import Head from "next/head";
 
 // ── Design Tokens ─────────────────────────────────────────
 const C = {
-  bg:"#FEFCF7", card:"#FFFFFF", cardBorder:"#D8CFBF",
-  accent:"#D97706", accentDim:"#B45309", accentGlow:"rgba(217,119,6,0.10)",
-  text:"#1C1410", textMuted:"#5A4E46", textDim:"#7C6E64", surface:"#F5F0E8",
-  danger:"#DC2626", dangerGlow:"rgba(220,38,38,0.08)",
+  bg:"#FEFCF7", card:"#FFFFFF", cardBorder:"#E0D6C8",
+  accent:"#2C6E49", accentDim:"#1E4D34", accentGlow:"rgba(44,110,73,0.10)",
+  brand:"#D97706",   // amber – nur für Logo/Marke
+  text:"#1C1410", textMuted:"#5C5048", textDim:"#8C7E74", surface:"#F4EFE6",
+  danger:"#C8392B", dangerGlow:"rgba(200,57,43,0.09)",
   green:"#16A34A", greenGlow:"rgba(22,163,74,0.10)",
-  purple:"#7C3AED", purpleGlow:"rgba(124,58,237,0.10)",
-  shadow:"0 2px 12px rgba(28,20,16,0.08)",
-  shadowMd:"0 4px 24px rgba(28,20,16,0.12)",
+  purple:"#6D28D9", purpleGlow:"rgba(109,40,217,0.10)",
+  shadow:"0 2px 16px rgba(28,20,16,0.07)",
+  shadowMd:"0 6px 32px rgba(28,20,16,0.11)",
 };
 const D = "'Playfair Display', serif";
 const B = "'DM Sans', sans-serif";
@@ -95,7 +96,7 @@ const TagToggle = ({ label, emoji, selected, color, glowColor, onClick }) => (
 const SL = ({ children }) => <p style={{ color:C.textMuted, fontSize:11, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>{children}</p>;
 
 const BigBtn = ({ label, onClick, disabled, secondary, color }) => (
-  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?C.surface:disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?"#A09080":"#1C1410", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 4px 20px rgba(217,119,6,0.28)":"none", transition:"all 0.2s" }}>
+  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?C.surface:disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?"#A09080":"#FFFFFF", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 4px 20px rgba(44,110,73,0.22)":"none", transition:"all 0.2s" }}>
     {label}
   </button>
 );
@@ -220,12 +221,12 @@ function SplashScreen({ profiles, onStart, onQuickStart, onManageProfiles, onVie
   const moodEmoji = { "Herzhaft":"🥩", "Leicht":"🥗", "Dessert":"🍰", "Überrasch mich!":"🎲" };
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(ellipse at 60% 10%, rgba(217,119,6,0.08) 0%, transparent 55%), ${C.bg}`, padding:"48px 24px 40px", display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100vh", background:`radial-gradient(ellipse at 60% 10%, rgba(44,110,73,0.08) 0%, transparent 55%), ${C.bg}`, padding:"48px 24px 40px", display:"flex", flexDirection:"column" }}>
 
       {/* Header */}
       <div style={{ textAlign:"center", marginBottom:28 }}>
         <span style={{ fontSize:44, display:"block", marginBottom:8, animation:"bounce 2.5s ease-in-out infinite" }}>🍳</span>
-        <h1 style={{ fontFamily:D, fontSize:38, fontWeight:700, lineHeight:1, marginBottom:4 }}>Mahl<span style={{color:C.accent}}>zeit</span></h1>
+        <h1 style={{ fontFamily:D, fontSize:38, fontWeight:700, lineHeight:1, marginBottom:4, color:C.text }}>Mahl<span style={{color:C.brand}}>zeit</span></h1>
         <p style={{ color:C.textMuted, fontSize:13 }}>Nie wieder grübeln was du kochen sollst.</p>
       </div>
 
@@ -267,7 +268,7 @@ function SplashScreen({ profiles, onStart, onQuickStart, onManageProfiles, onVie
       )}
 
       {/* Main actions */}
-      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#FFFFFF", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(217,119,6,0.25)", marginBottom:10 }}>
+      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#FFFFFF", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(44,110,73,0.22)", marginBottom:10 }}>
         Rezept finden →
       </button>
       <button onClick={()=>onWeekPlanner(active)} style={{ background:C.card, border:`1.5px solid ${C.cardBorder}`, color:C.text, fontWeight:600, fontSize:15, padding:"14px", borderRadius:50, fontFamily:B, marginBottom:16 }}>
@@ -364,7 +365,7 @@ function IngredientsScreen({ onNext, onSkip }) {
       {/* Scan buttons */}
       {!scanning&&scanCount<MAX_SCANS&&(
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <button onClick={()=>triggerScan("scan-camera")} style={{padding:"12px 8px",borderRadius:14,background:`linear-gradient(135deg,rgba(217,119,6,0.12),rgba(180,83,9,0.06))`,border:`1.5px solid ${C.accentDim}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+          <button onClick={()=>triggerScan("scan-camera")} style={{padding:"12px 8px",borderRadius:14,background:`linear-gradient(135deg,rgba(44,110,73,0.10),rgba(30,77,52,0.05))`,border:`1.5px solid ${C.accentDim}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
             <span style={{fontSize:22}}>📷</span><p style={{color:C.accent,fontWeight:600,fontSize:13}}>Kamera</p><p style={{color:C.textMuted,fontSize:11}}>Direkt fotografieren</p>
           </button>
           <button onClick={()=>triggerScan("scan-gallery")} style={{padding:"12px 8px",borderRadius:14,background:C.card,border:`1.5px solid ${C.cardBorder}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
@@ -436,7 +437,7 @@ function IngredientsPage({ onNext, onSkip, onBack }) {
       {onBack&&<BackBtn onClick={onBack}/>}
       <PBar step={1} total={2}/>
       <div style={{marginBottom:18}}>
-        <h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4}}>Was hast du im Kühlschrank?</h2>
+        <h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4,color:C.text}}>Was hast du im Kühlschrank?</h2>
         <p style={{color:C.textMuted,fontSize:14}}>Foto scannen, eintippen oder überspringen.</p>
       </div>
       <IngredientsScreen onNext={onNext} onSkip={onSkip}/>
@@ -465,7 +466,7 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=2, total=2, defau
       <BackBtn onClick={onBack}/>
       <PBar step={step} total={total}/>
       <div style={{marginBottom:22}}>
-        <h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4}}>Wie ist deine Stimmung?</h2>
+        <h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4,color:C.text}}>Wie ist deine Stimmung?</h2>
         {profile&&<p style={{color:C.accent,fontSize:13}}>{profile.emoji} {profile.name}</p>}
         {defaultPrefs&&<div style={{marginTop:8,display:"flex",alignItems:"center",gap:6,padding:"6px 12px",background:C.greenGlow,borderRadius:20,border:`1px solid ${C.green}`,width:"fit-content"}}><span style={{fontSize:12}}>⚡</span><p style={{color:C.green,fontSize:12,fontWeight:600}}>Letzte Einstellungen vorausgefüllt</p></div>}
       </div>
@@ -592,10 +593,10 @@ function LoadingScreen({ streamText="" }) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,overflowY:"auto"}}>
-      <div style={{background:"linear-gradient(180deg,rgba(217,119,6,0.06) 0%,transparent 100%)",padding:"60px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`,animation:"fadeUp 0.4s ease"}}>
+      <div style={{background:"linear-gradient(180deg,rgba(44,110,73,0.05) 0%,transparent 100%)",padding:"60px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`,animation:"fadeUp 0.4s ease"}}>
         <p style={{color:C.accent,fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>🎯 Dein Rezept</p>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-          <h1 style={{fontFamily:D,fontSize:26,fontWeight:700,lineHeight:1.2,flex:1,paddingRight:14}}>{name}</h1>
+          <h1 style={{fontFamily:D,fontSize:26,fontWeight:700,lineHeight:1.2,flex:1,paddingRight:14,color:C.text}}>{name}</h1>
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"10px",fontSize:26,flexShrink:0}}>{emoji||"🍽"}</div>
         </div>
         {description&&<p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:12,animation:"fadeUp 0.3s ease"}}>{description}</p>}
@@ -608,7 +609,7 @@ function LoadingScreen({ streamText="" }) {
       <div style={{padding:"20px 24px 120px",display:"flex",flexDirection:"column",gap:16}}>
         {ingredients&&(
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow,animation:"fadeUp 0.3s ease"}}>
-            <h3 style={{fontFamily:D,fontSize:16,marginBottom:12}}>🛒 Zutaten</h3>
+            <h3 style={{fontFamily:D,fontSize:16,marginBottom:12,color:C.text}}>🛒 Zutaten</h3>
             {ingredients.map((ing,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}><span style={{fontSize:13,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span><span style={{fontSize:12,color:C.textMuted}}>{ing.amount}</span></div>))}
             {!steps&&<div style={{marginTop:10,display:"flex",alignItems:"center",gap:8}}><Spin size={14}/><p style={{color:C.textMuted,fontSize:12}}>Zubereitung wird geladen...</p></div>}
           </div>
@@ -616,7 +617,7 @@ function LoadingScreen({ streamText="" }) {
         {!ingredients&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"16px 0"}}><Spin size={18}/><p style={{color:C.textMuted,fontSize:14}}>Zutaten werden zusammengestellt...</p></div>}
         {steps&&(
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow,animation:"fadeUp 0.3s ease"}}>
-            <h3 style={{fontFamily:D,fontSize:16,marginBottom:12}}>👨‍🍳 Zubereitung</h3>
+            <h3 style={{fontFamily:D,fontSize:16,marginBottom:12,color:C.text}}>👨‍🍳 Zubereitung</h3>
             {steps.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:13,color:C.textMuted,lineHeight:1.6,paddingTop:3}}>{step}</p></div>))}
           </div>
         )}
@@ -669,12 +670,12 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 
   return (
     <div style={{minHeight:"100vh",background:C.bg}}>
-      <div style={{background:"linear-gradient(180deg,rgba(217,119,6,0.06) 0%,transparent 100%)",padding:"56px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`}}>
+      <div style={{background:"linear-gradient(180deg,rgba(44,110,73,0.05) 0%,transparent 100%)",padding:"56px 24px 24px",borderBottom:`1px solid ${C.cardBorder}`}}>
         <button onClick={onBack} style={{color:C.textMuted,fontSize:14,display:"flex",alignItems:"center",gap:5,marginBottom:14,fontFamily:B}}>← Einstellungen ändern</button>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
           <div style={{flex:1,paddingRight:14}}>
             <p style={{color:C.accent,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>🎯 Dein Rezept</p>
-            <h1 style={{fontFamily:D,fontSize:25,fontWeight:700,lineHeight:1.2}}>{displayRecipe.name}</h1>
+            <h1 style={{fontFamily:D,fontSize:25,fontWeight:700,lineHeight:1.2,color:C.text}}>{displayRecipe.name}</h1>
           </div>
           <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"10px",fontSize:26,flexShrink:0}}>{displayRecipe.emoji||"🍽"}</div>
         </div>
@@ -727,7 +728,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 
         {/* Steps */}
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow}}>
-          <h3 style={{fontFamily:D,fontSize:16,marginBottom:14}}>👨‍🍳 Zubereitung</h3>
+          <h3 style={{fontFamily:D,fontSize:16,marginBottom:14,color:C.text}}>👨‍🍳 Zubereitung</h3>
           {displayRecipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<displayRecipe.steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:2}}>{step}</p></div>))}
         </div>
 
@@ -737,7 +738,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
       {/* Bottom bar */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`linear-gradient(0deg,${C.bg} 70%,rgba(254,252,247,0) 100%)`,padding:"14px 24px 34px",display:"flex",gap:10,maxWidth:430,margin:"0 auto"}}>
         <button onClick={()=>setShowNope(true)} style={{flex:1,padding:"14px",borderRadius:50,border:`1.5px solid ${C.accent}`,background:C.accentGlow,color:C.accent,fontWeight:700,fontSize:14,fontFamily:B}}>🔄 Neuer Vorschlag</button>
-        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(217,119,6,0.28)"}}>Fertig ✓</button>
+        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(44,110,73,0.22)"}}>Fertig ✓</button>
       </div>
 
       {/* Nope sheet */}
@@ -745,7 +746,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:100}} onClick={()=>setShowNope(false)}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"24px 24px 0 0",padding:"24px 24px 48px",width:"100%",border:`1px solid ${C.cardBorder}`,maxWidth:430,margin:"0 auto"}}>
             <div style={{width:36,height:4,borderRadius:2,background:C.cardBorder,margin:"0 auto 20px"}}/>
-            <h3 style={{fontFamily:D,fontSize:19,marginBottom:5}}>Andere Idee?</h3>
+            <h3 style={{fontFamily:D,fontSize:19,marginBottom:5,color:C.text}}>Andere Idee?</h3>
             <p style={{color:C.textMuted,fontSize:13,marginBottom:18}}>Was passt dir nicht?</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[{label:"Zu aufwendig",desc:"Zeig mir etwas Einfacheres",emoji:"😌",reason:"zu_aufwendig"},{label:"Anderes Gericht",desc:"Komplett andere Richtung",emoji:"🔄",reason:"anderes_gericht"}].map(({label,desc,emoji,reason})=>(
@@ -789,7 +790,7 @@ function RatingModal({ recipe, profile, onDone }) {
           </div>
         ) : (
           <>
-            <h3 style={{fontFamily:D,fontSize:20,fontWeight:700,marginBottom:4,textAlign:"center"}}>Hat es geschmeckt?</h3>
+            <h3 style={{fontFamily:D,fontSize:20,fontWeight:700,marginBottom:4,textAlign:"center",color:C.text}}>Hat es geschmeckt?</h3>
             <p style={{color:C.textMuted,fontSize:14,marginBottom:24,textAlign:"center"}}>{recipe.name}</p>
             <div style={{display:"flex",gap:12}}>
               <button onClick={()=>rate("up")} style={{flex:1,padding:"16px",borderRadius:16,background:C.greenGlow,border:`1.5px solid ${C.green}`,color:C.green,fontWeight:700,fontSize:15,fontFamily:B,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
@@ -952,7 +953,7 @@ function WeekPlanner({ profile, onBack }) {
     <div style={{minHeight:"100vh",background:C.bg,padding:"56px 24px 32px",display:"flex",flexDirection:"column"}}>
       <BackBtn onClick={onBack}/>
       <PBar step={1} total={3}/>
-      <div style={{marginBottom:18}}><h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4}}>Was ist diese Woche im Kühlschrank?</h2><p style={{color:C.textMuted,fontSize:14}}>Gilt als Basis für alle Tage.</p></div>
+      <div style={{marginBottom:18}}><h2 style={{fontFamily:D,fontSize:28,fontWeight:700,lineHeight:1.2,marginBottom:4,color:C.text}}>Was ist diese Woche im Kühlschrank?</h2><p style={{color:C.textMuted,fontSize:14}}>Gilt als Basis für alle Tage.</p></div>
       <IngredientsScreen onNext={(ings,must,noShop)=>{setWIng(ings);setPhase("setup-prefs");}} onSkip={()=>{setWIng([]);setPhase("setup-prefs");}}/>
     </div>
   );
@@ -974,7 +975,7 @@ function WeekPlanner({ profile, onBack }) {
 
       <div style={{display:"flex",gap:8,marginBottom:10}}>
         <button onClick={()=>setPhase("setup-ingredients")} style={{flex:1,padding:"10px",borderRadius:50,background:C.card,border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontWeight:600,fontSize:13,fontFamily:B}}>← Neu planen</button>
-        <button onClick={()=>generateAll(wPrefs,wIng,[])} disabled={genAll} style={{flex:2,padding:"10px",borderRadius:50,background:genAll?C.surface:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:genAll?"#A09080":"#1C1410",fontWeight:700,fontSize:13,fontFamily:B,boxShadow:genAll?"none":"0 4px 16px rgba(217,119,6,0.22)"}}>
+        <button onClick={()=>generateAll(wPrefs,wIng,[])} disabled={genAll} style={{flex:2,padding:"10px",borderRadius:50,background:genAll?C.surface:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:genAll?"#A09080":"#1C1410",fontWeight:700,fontSize:13,fontFamily:B,boxShadow:genAll?"none":"0 4px 16px rgba(44,110,73,0.22)"}}>
           {genAll?"Generiert...":"✨ Alle neu"}
         </button>
       </div>
@@ -1157,19 +1158,22 @@ export default function Mahlzeit() {
       <Head>
         <title>Mahlzeit</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-        <meta name="theme-color" content="#D97706"/>
+        <meta name="theme-color" content="#2C6E49"/>
         <link rel="manifest" href="/manifest.json"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
         <style>{`
           * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
           body { background:#FEFCF7; color:#1C1410; font-family:'DM Sans',sans-serif; }
           input, button, textarea { background:none; border:none; outline:none; color:inherit; cursor:pointer; }
+          h1,h2,h3,h4 { color:#1C1410; }
           @keyframes spin { to { transform:rotate(360deg); } }
           @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
           @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
           @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap');
         `}</style>
       </Head>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,overflowX:"hidden"}}>
