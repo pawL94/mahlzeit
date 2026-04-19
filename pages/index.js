@@ -1056,6 +1056,7 @@ REGELN:
 5. Kreativ, kein 08/15-Gericht.
 6. Zutaten nicht still ersetzen.
 7. Unverträglichkeiten haben absolute Priorität.
+8. PORTIONSMENGEN: Realistische Haushaltsmengen pro Person – z.B. 80-100g Pasta, 150g Fleisch, 200g Gemüse. Keine übertriebenen Restaurant- oder Buffetmengen.
 
 Antworte NUR mit JSON:
 {"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
