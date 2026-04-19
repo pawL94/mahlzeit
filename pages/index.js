@@ -83,13 +83,13 @@ const DEVICES = [
 // ── Profile Editor ────────────────────────────────────────
 function ProfileEditor({ profile, onSave, onCancel, isNew }) {
   const [name,setName]=useState(profile?.name||"");
-  const [emoji,setEmoji]=useState(profile?.emoji||"🧑");
+  const [emoji,setEmoji]=useState(profile?.emoji||"🐱");
   const [diet,setDiet]=useState(profile?.diet||[]);
   const [custom,setCustom]=useState(profile?.custom||[]);
   const [ci,setCi]=useState("");
   const [cuisines,setCuisines]=useState(profile?.cuisines||[]);
   const [availability,setAvailability]=useState(profile?.availability||"supermarkt");
-  const EMOJIS=["🧑","👩","👨","👧","👦","👶","🧓","👴","👵","🐱","🐶","⭐"];
+  const EMOJIS=["🐱","🐶","🦊","🐻","🐼","🐨","🦁","🐯","🐸","🐧","🦋","🌟","🍕","🎮","🎵","🌈"];
   const toggle=(v)=>setDiet(p=>p.includes(v)?p.filter(x=>x!==v):[...p,v]);
   const addC=()=>{const v=ci.trim();if(v&&!custom.includes(v))setCustom(p=>[...p,v]);setCi("");};
   return (
@@ -228,6 +228,7 @@ function SplashScreen({ profiles, onStart, onManageProfiles, onViewSaved, onWeek
 function IngredientsScreen({ onNext, onSkip }) {
   const [input,setInput]=useState(""); const [ingredients,setIngredients]=useState([]);
   const [mustUse,setMustUse]=useState([]); // ingredients that MUST appear in recipe
+  const [noShopping,setNoShopping]=useState(false);
   const [scanning,setScanning]=useState(false); const [scanDone,setScanDone]=useState(false); const [scanError,setScanError]=useState(false);
   const [showScanInfo,setShowScanInfo]=useState(false);
   const [pendingInputId,setPendingInputId]=useState(null);
@@ -364,9 +365,20 @@ function IngredientsScreen({ onNext, onSkip }) {
       )}
       <p style={{color:C.textDim,fontSize:11,textAlign:"center",marginBottom:12}}>💡 Tipp: Zutat doppelt antippen = muss im Rezept vorkommen (z.B. für Lebensmittel die bald ablaufen)</p>
       <div style={{marginBottom:24}}><SL>Schnellauswahl</SL><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{sugg.filter(s=>!ingredients.includes(s)).map(s=>(<button key={s} onClick={()=>setIngredients(p=>[...p,s])} style={{background:C.surface,border:`1px solid ${C.cardBorder}`,borderRadius:20,padding:"7px 14px",color:C.textMuted,fontSize:13,fontFamily:B}}>{s}</button>))}</div></div>
+      {/* No shopping toggle */}
+      <button onClick={()=>setNoShopping(p=>!p)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:14,background:noShopping?C.greenGlow:C.card,border:`1.5px solid ${noShopping?C.green:C.cardBorder}`,width:"100%",fontFamily:B,marginBottom:16,transition:"all 0.2s"}}>
+        <span style={{fontSize:22}}>{noShopping?"🏠":"🛒"}</span>
+        <div style={{textAlign:"left",flex:1}}>
+          <p style={{fontWeight:600,fontSize:14,color:noShopping?C.green:C.text,marginBottom:2}}>{noShopping?"Nur Vorrat nutzen":"Einkaufen ist ok"}</p>
+          <p style={{fontSize:12,color:C.textMuted}}>{noShopping?"KI versucht nur vorhandene Zutaten zu nutzen":"Eine Zutat darf auch zugekauft werden"}</p>
+        </div>
+        <div style={{width:22,height:22,borderRadius:11,background:noShopping?C.green:C.cardBorder,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          {noShopping&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}
+        </div>
+      </button>
       <div style={{flex:1}}/>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <BigBtn label="Weiter →" onClick={()=>onNext(ingredients,mustUse)} disabled={ingredients.length===0}/>
+        <BigBtn label="Weiter →" onClick={()=>onNext(ingredients,mustUse,noShopping)} disabled={ingredients.length===0}/>
         <BigBtn label="Ohne Zutaten entdecken" onClick={()=>onSkip([])} secondary/>
       </div>
     </>
@@ -997,6 +1009,7 @@ export default function Mahlzeit() {
   const [activeProfile,setActiveProfile]=useState(null);
   const [ingredients,setIngredients]=useState([]);
   const [mustUse,setMustUse]=useState([]);
+  const [noShopping,setNoShopping]=useState(false);
   const [disliked,setDisliked]=useState([]);
   const [prefs,setPrefs]=useState(null);
   const [recipe,setRecipe]=useState(null);
@@ -1027,6 +1040,7 @@ export default function Mahlzeit() {
       const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
       const mustUseHint=mustUse?.length>0?"PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen (bald ablaufend!): "+mustUse.join(", "):"";
       if(mustUseHint) lines.push(mustUseHint);
+      if(noShopping) lines.push("KEIN EINKAUF: Nutze ausschließlich die vorhandenen Zutaten. Nur wenn sich absolut kein sinnvolles Gericht ergibt, darf maximal EINE einzige Zutat zugekauft werden.");
       const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
         "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
         "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
@@ -1103,7 +1117,7 @@ Antworte NUR mit JSON:
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,overflowX:"hidden"}}>
         {screen==="splash"&&<SplashScreen profiles={profiles} onStart={(p)=>{setActiveProfile(p);setScreen("ingredients");}} onManageProfiles={()=>setScreen("profiles")} onViewSaved={(p)=>{setSavedProfile(p);setScreen("saved");}} onWeekPlanner={(p)=>{setActiveProfile(p);setScreen("week");}}/>}
         {screen==="profiles"&&<ProfileManager profiles={profiles} onSave={saveProfiles} onBack={()=>setScreen("splash")}/>}
-        {screen==="ingredients"&&<IngredientsPage onNext={ings=>{setIngredients(ings);setScreen("disliked");}} onSkip={()=>{setIngredients([]);setScreen("disliked");}}/>}
+        {screen==="ingredients"&&<IngredientsPage onNext={(ings,must,noShop)=>{setIngredients(ings);setMustUse(must||[]);setNoShopping(noShop||false);setScreen("disliked");}} onSkip={()=>{setIngredients([]);setMustUse([]);setNoShopping(false);setScreen("disliked");}}/>}
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
         {screen==="loading"&&<LoadingScreen streamText={streamText}/>}
@@ -1120,7 +1134,7 @@ Antworte NUR mit JSON:
             </button>
           </div>
         )}
-        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setMustUse([]);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
+        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setMustUse([]);setNoShopping(false);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
         {screen==="saved"&&<SavedRecipesScreen profile={savedProfile} profiles={profiles} onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
         {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
         {screen==="week"&&<WeekPlanner profile={activeProfile} onBack={()=>setScreen("splash")}/>}
