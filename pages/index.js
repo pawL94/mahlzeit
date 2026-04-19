@@ -865,6 +865,7 @@ export default function Mahlzeit() {
   const [disliked,setDisliked]=useState([]);
   const [prefs,setPrefs]=useState(null);
   const [recipe,setRecipe]=useState(null);
+  const [rejectedRecipes,setRejectedRecipes]=useState([]);
   const [viewingRecipe,setViewingRecipe]=useState(null);
   const [savedProfile,setSavedProfile]=useState(null);
 
@@ -876,8 +877,10 @@ export default function Mahlzeit() {
     const restr=[...(activeProfile?.diet||[]),...(activeProfile?.custom||[])];
     const loved=store.recipes.load(activeProfile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const lastRecipe = nope && recipe ? recipe.name : null;
+    // Track all rejected recipes this session
+    if(nope && recipe) setRejectedRecipes(prev=>[...new Set([...prev, recipe.name])]);
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt",devices:finalPrefs.devices||[]})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,avoidNames:[...rejectedRecipes,...(lastRecipe?[lastRecipe]:[])],preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt",devices:finalPrefs.devices||[]})});
       const data=await resp.json();
       if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
     }catch(err){
@@ -902,7 +905,7 @@ export default function Mahlzeit() {
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
         {screen==="loading"&&<LoadingScreen/>}
-        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
+        {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setDisliked([]);setRejectedRecipes([]);setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
         {screen==="saved"&&<SavedRecipesScreen profile={savedProfile} profiles={profiles} onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
         {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
         {screen==="week"&&<WeekPlanner profile={activeProfile} onBack={()=>setScreen("splash")}/>}
