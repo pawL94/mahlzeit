@@ -180,8 +180,7 @@ Originalzutaten (für ${fromPersons} ${fromPersons===1?"Person":"Personen"}):
 ${ingredientList}
 
 Originalzubereitung:
-${recipe.steps.map((s,i)=>`${i+1}. ${s}`).join("
-")}
+${recipe.steps.map((s,i)=>`${i+1}. ${s}`).join("\n")}
 
 REGELN:
 1. Skaliere alle Mengen korrekt und sinnvoll – nicht stupide multiplizieren.
