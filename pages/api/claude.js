@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
     // ── Recipe ────────────────────────────────────────────
     if (type === "recipe") {
-      const { ingredients, time, mood, portion, intolerances, disliked, nope, lovedRecipes, avoidNames, avoidName, weekMode, preferredCuisines, availability } = params;
+      const { ingredients, time, mood, portion, intolerances, disliked, nope, lovedRecipes, avoidNames, avoidName, weekMode, preferredCuisines, availability, devices } = params;
 
       const timeMap = { "Schnell": "maximal 15 Minuten", "Normal": "maximal 30 Minuten", "Gemütlich": "60 bis 90 Minuten" };
       const timeLimit = timeMap[time] || "maximal 30 Minuten";
@@ -108,6 +108,15 @@ export default async function handler(req, res) {
       if (nope === "anderes_gericht") lines.push("Falscher Stil → VÖLLIG andere Küche. Heute unbedingt: " + cuisine);
       if (lovedRecipes?.length > 0) lines.push("Lieblingsgerichte (nicht wiederholen, aber Stil nutzen): " + lovedRecipes.join(", "));
       if (weekMode) lines.push("Wochenplanung: ausgewogenes Abendessen. WICHTIG: Die verfügbaren Zutaten sind der Wochenvorrat – jede einzelne Zutat darf NUR in maximal 2 von 7 Gerichten vorkommen. Nutze heute NUR 1-2 der verfügbaren Zutaten und wähle die Küche " + cuisine + " – auch wenn diese Küche die Zutaten normalerweise nicht verwendet.");
+      if (devices?.length > 0) {
+        const deviceHints = {
+          "Airfryer (1 Korb)": "Airfryer verwenden: Rezept für einen Korb optimieren. Temperatur in °C und Zeit in Minuten präzise angeben (z.B. '200°C, 15 Min'). Vorheizen erwähnen. Mengen für einen Korb ausrichten.",
+          "Airfryer (2 Körbe)": "Dual-Basket Airfryer verwenden: Nutze beide Körbe gleichzeitig! Plane Hauptkomponente und Beilage separat mit je eigener Temperatur und Zeit. Gib für jeden Korb an was hineinkommt, bei welcher Temperatur und wie lange. Das ist der große Vorteil des Dual-Basket – zwei Komponenten gleichzeitig perfekt garen.",
+          "Thermomix": "Thermomix verwenden: Alle Schritte mit konkreten TM-Funktionen formulieren (z.B. 'Stufe 4, 100°C, 10 Min' oder 'Varoma, Stufe 2, 20 Min'). Reihenfolge der Zutaten TM-typisch. Nur Rezepte die wirklich im Thermomix funktionieren.",
+        };
+        const deviceList = devices.map(d => deviceHints[d] || ("Gerät nutzen: " + d)).join(" | ");
+        lines.push("KÜCHENGERÄTE HEUTE: " + deviceList);
+      }
 
       const prompt = `Du bist ein kreativer Küchenchef. [${reqId}]
 
@@ -159,6 +168,35 @@ Antworte NUR mit JSON (kein Markdown):
       const text = await callClaude(prompt, 800);
       const result = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g, "").trim());
       return res.status(200).json(result);
+    }
+
+    // ── Scale recipe ──────────────────────────────────────
+    if (type === "scale") {
+      const { recipe, fromPersons, toPersons } = params;
+      const ingredientList = recipe.ingredients.map(i => `- ${i.name}: ${i.amount}`).join("\n");
+      const prompt = `Du bist ein Küchenchef. Passe dieses Rezept von ${fromPersons} auf ${toPersons} ${toPersons===1?"Person":"Personen"} an.
+
+Originalzutaten (für ${fromPersons} ${fromPersons===1?"Person":"Personen"}):
+${ingredientList}
+
+Originalzubereitung:
+${recipe.steps.map((s,i)=>`${i+1}. ${s}`).join("
+")}
+
+REGELN:
+1. Skaliere alle Mengen korrekt und sinnvoll – nicht stupide multiplizieren.
+   - Gewürze und Salz skalieren weniger stark (z.B. Salz × 1.5 statt × 3)
+   - Garzeiten ändern sich oft kaum – weise darauf hin wenn sie sich ändern
+   - Ganze Einheiten runden (z.B. 1.5 Eier → 2 Eier)
+2. Passe die Zubereitungsschritte an wo nötig (z.B. größere Pfanne, längere Garzeit)
+3. Behalte available-Status aller Zutaten unverändert
+
+Antworte NUR mit JSON (kein Markdown):
+{"ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
+
+      const text = await callClaude(prompt, 800);
+      const scaled = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g,"").trim());
+      return res.status(200).json({ recipe: { ...recipe, ...scaled } });
     }
 
     return res.status(400).json({ error: "Unknown type" });
