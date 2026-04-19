@@ -1081,8 +1081,8 @@ Antworte NUR mit JSON:
       const recipe=JSON.parse(fullText.replace(/```json|```/g,"").trim());
       setRecipe(recipe);setScreen("recipe");
     }catch(err){
-      setRecipe({name:"Pasta Aglio e Olio",emoji:"🍝",description:"Klassisch italienisch. Wenige Zutaten, maximaler Geschmack.",time:"20 Min",difficulty:"Einfach",calories:"ca. 420 kcal",ingredients:[{name:"Spaghetti",amount:"200g",available:true},{name:"Knoblauch",amount:"4 Zehen",available:true},{name:"Olivenöl",amount:"4 EL",available:false},{name:"Petersilie",amount:"1 Bund",available:false}],steps:["Pasta al dente kochen.","Knoblauch in Öl goldbraun anbraten.","Pasta abgießen, Kochwasser aufheben.","Alles vermengen und servieren."],tip:"Das Kochwasser macht die Sauce cremig!"});
-      setScreen("recipe");
+      console.error("Stream error:", err);
+      setScreen("streamError");
     }
   };
 
@@ -1102,6 +1102,19 @@ Antworte NUR mit JSON:
         {screen==="disliked"&&<DislikedScreen onNext={d=>{setDisliked(d);setScreen("preferences");}} onBack={()=>setScreen("ingredients")}/>}
         {screen==="preferences"&&<PreferencesScreen profile={activeProfile} onGenerate={p=>{setPrefs(p);callAPI(p);}} onBack={()=>setScreen("disliked")}/>}
         {screen==="loading"&&<LoadingScreen streamText={streamText}/>}
+        {screen==="streamError"&&(
+          <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:C.bg}}>
+            <span style={{fontSize:48,marginBottom:20}}>😕</span>
+            <h2 style={{fontFamily:D,fontSize:24,fontWeight:700,marginBottom:12}}>Etwas ist schiefgelaufen</h2>
+            <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:32,maxWidth:280}}>Das Rezept konnte nicht vollständig geladen werden. Bitte versuche es nochmal.</p>
+            <button onClick={()=>{setStreamText("");callAPI(prefs);}} style={{background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,padding:"15px 40px",borderRadius:50,fontFamily:B,boxShadow:"0 8px 24px rgba(245,166,35,0.3)",marginBottom:12}}>
+              🔄 Nochmal versuchen
+            </button>
+            <button onClick={()=>{setStreamText("");setScreen("preferences");}} style={{color:C.textMuted,fontSize:14,padding:"10px",fontFamily:B}}>
+              ← Einstellungen ändern
+            </button>
+          </div>
+        )}
         {screen==="recipe"&&<RecipeScreen recipe={recipe} profile={activeProfile} disliked={disliked} onNope={r=>callAPI(prefs,r)} onBack={()=>setScreen("preferences")} onRestart={()=>{setRecipe(null);setIngredients([]);setMustUse([]);setDisliked([]);setRejectedRecipes([]);setStreamText("");setScreen("splash");}} onViewSaved={()=>{setSavedProfile(activeProfile);setScreen("saved");}}/>}
         {screen==="saved"&&<SavedRecipesScreen profile={savedProfile} profiles={profiles} onBack={()=>setScreen(recipe?"recipe":"splash")} onOpen={(r)=>{setViewingRecipe(r);setScreen("viewRecipe");}}/>}
         {screen==="viewRecipe"&&viewingRecipe&&<RecipeScreen recipe={viewingRecipe} profile={activeProfile} disliked={[]} onNope={()=>setScreen("saved")} onBack={()=>setScreen("saved")} onRestart={()=>{setViewingRecipe(null);setScreen("splash");}} onViewSaved={()=>setScreen("saved")}/>}
