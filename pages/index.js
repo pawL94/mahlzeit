@@ -29,6 +29,11 @@ const store = {
 
 const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 
+// Persons preference per profile
+const personsKey = (profileId) => "mz_persons_" + (profileId || "global");
+const savePersons = (profileId, n) => { try { localStorage.setItem(personsKey(profileId), String(n)); } catch(e) {} };
+const loadPersons = (profileId) => { try { const v=localStorage.getItem(personsKey(profileId)); return v ? parseInt(v) : 2; } catch(e) { return 2; } };
+
 const Chip = ({ label, color, dimColor, glowColor, onRemove }) => (
   <span style={{ display:"inline-flex", alignItems:"center", gap:6, background:glowColor||C.accentGlow, border:`1px solid ${dimColor||C.accentDim}`, borderRadius:20, padding:"5px 12px", fontSize:13, color:color||C.accent, fontWeight:500 }}>
     {label}{onRemove && <button onClick={onRemove} style={{ color:dimColor||C.accentDim, fontSize:16, lineHeight:1 }}>x</button>}
@@ -68,6 +73,11 @@ const CUISINES = [
   {l:"Asiatisch",e:"🍜"},{l:"Japanisch",e:"🍣"},{l:"Koreanisch",e:"🍱"},
   {l:"Indisch",e:"🍛"},{l:"Mexikanisch",e:"🌮"},{l:"Amerikanisch",e:"🍔"},
   {l:"Mediterran",e:"🐟"},{l:"Libanesisch",e:"🧆"},{l:"Vietnamesisch",e:"🍲"},
+];
+
+const DEVICES = [
+  {l:"Airfryer",e:"🌀",sub:[{l:"Airfryer (1 Korb)",e:"🌀"},{l:"Airfryer (2 Körbe)",e:"🌀🌀"}]},
+  {l:"Thermomix",e:"🥘"},
 ];
 
 // ── Profile Editor ────────────────────────────────────────
@@ -348,7 +358,12 @@ function IngredientsPage({ onNext, onSkip, onBack, step=1, total=3, title="Was h
 // ── Disliked ──────────────────────────────────────────────
 function DislikedScreen({ onNext, onBack, step=2, total=3 }) {
   const [disliked,setDisliked]=useState([]); const [ci,setCi]=useState("");
-  const DIS=[{l:"Rosenkohl",e:"🥦"},{l:"Leber",e:"🫀"},{l:"Fenchel",e:"🌿"},{l:"Oliven",e:"🫒"},{l:"Pilze",e:"🍄"},{l:"Aubergine",e:"🍆"},{l:"Spinat",e:"🥬"},{l:"Knoblauch",e:"🧄"},{l:"Zwiebeln",e:"🧅"},{l:"Koriander",e:"🌿"},{l:"Rosinen",e:"🍇"},{l:"Sardinen",e:"🐟"}];
+  const DIS=[
+    {l:"Pasta",e:"🍝"},{l:"Reis",e:"🍚"},{l:"Hähnchen",e:"🍗"},{l:"Hackfleisch",e:"🥩"},
+    {l:"Fisch",e:"🐟"},{l:"Eier",e:"🥚"},{l:"Kartoffeln",e:"🥔"},{l:"Suppe",e:"🍲"},
+    {l:"Salat",e:"🥗"},{l:"Pilze",e:"🍄"},{l:"Zwiebeln",e:"🧅"},{l:"Knoblauch",e:"🧄"},
+    {l:"Spinat",e:"🥬"},{l:"Brokkoli",e:"🥦"},{l:"Tofu",e:"🫘"},
+  ];
   const toggle=(v)=>setDisliked(p=>p.includes(v)?p.filter(x=>x!==v):[...p,v]);
   const addC=()=>{const v=ci.trim();if(v&&!disliked.includes(v))setDisliked(p=>[...p,v]);setCi("");};
   return (
@@ -369,8 +384,11 @@ function DislikedScreen({ onNext, onBack, step=2, total=3 }) {
 
 // ── Preferences ───────────────────────────────────────────
 function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
-  const [time,setTime]=useState(null); const [mood,setMood]=useState(null); const [portion,setPortion]=useState(null);
-  const ready=time&&mood&&portion;
+  const [time,setTime]=useState(null); const [mood,setMood]=useState(null);
+  const [persons,setPersons]=useState(()=>loadPersons(profile?.id));
+  const [devices,setDevices]=useState([]);
+  const toggleDevice=(v)=>setDevices(p=>p.includes(v)?p.filter(x=>x!==v):[...p,v]);
+  const ready=time&&mood;
   return (
     <div style={{ minHeight:"100vh", background:C.bg, padding:"56px 24px 32px", display:"flex", flexDirection:"column" }}>
       <button onClick={onBack} style={{ color:C.textMuted, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>← Zurück</button>
@@ -379,9 +397,38 @@ function PreferencesScreen({ profile, onGenerate, onBack, step=3, total=3 }) {
       <div style={{display:"flex",flexDirection:"column",gap:22}}>
         <div><SL>⏱ Wie viel Zeit hast du?</SL><div style={{display:"flex",gap:8}}>{[["Schnell","⚡","≤15 Min"],["Normal","🕐","30 Min"],["Gemütlich","🌿","60+ Min"]].map(([l,e,s])=>(<button key={l} onClick={()=>setTime(l)} style={{flex:1,padding:"13px 8px",borderRadius:14,fontFamily:B,border:`1.5px solid ${time===l?C.accent:C.cardBorder}`,background:time===l?C.accentGlow:C.card,color:time===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:22}}>{e}</span><span style={{fontWeight:600}}>{l}</span><span style={{fontSize:11,opacity:0.7}}>{s}</span></button>))}</div></div>
         <div><SL>🍽 Worauf hast du Hunger?</SL><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[["Herzhaft","🥩"],["Leicht","🥗"],["Comfort","🫕"],["Überrasch mich!","🎲"]].map(([l,e])=>(<button key={l} onClick={()=>setMood(l)} style={{flex:1,minWidth:"45%",padding:"12px 6px",borderRadius:14,fontFamily:B,border:`1.5px solid ${mood===l?C.accent:C.cardBorder}`,background:mood===l?C.accentGlow:C.card,color:mood===l?C.accent:C.textMuted,fontSize:12,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>{e}</span>{l}</button>))}</div></div>
-        <div><SL>👥 Für wie viele Personen?</SL><div style={{display:"flex",gap:8}}>{[["1","🧑"],["2","👫"],["3–4","👨‍👩‍👧"],["5+","🎉"]].map(([l,e])=>(<button key={l} onClick={()=>setPortion(l)} style={{flex:1,padding:"13px 8px",borderRadius:14,fontFamily:B,border:`1.5px solid ${portion===l?C.accent:C.cardBorder}`,background:portion===l?C.accentGlow:C.card,color:portion===l?C.accent:C.textMuted,fontSize:13,fontWeight:500,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:22}}>{e}</span>{l}</button>))}</div></div>
+
       </div>
-      <div style={{flex:1}}/><BigBtn label="✨ Rezept generieren" onClick={()=>ready&&onGenerate({time,mood,portion})} disabled={!ready} style={{marginTop:24}}/>
+      <div>
+        <SL>👥 Für wie viele Personen?</SL>
+        <div style={{display:"flex",gap:6}}>
+          {[1,2,3,4,5,6,7,8].map(n=>(
+            <button key={n} onClick={()=>{setPersons(n);savePersons(profile?.id,n);}} style={{flex:1,padding:"11px 0",borderRadius:12,fontFamily:B,fontSize:13,fontWeight:600,border:`1.5px solid ${persons===n?C.accent:C.cardBorder}`,background:persons===n?C.accentGlow:C.card,color:persons===n?C.accent:C.textMuted,transition:"all 0.15s"}}>{n}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{marginTop:8}}>
+        <SL>🍳 Küchengeräte heute (optional)</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {DEVICES.map(({l,e,sub})=>(
+            <div key={l} style={{display:"flex",flexDirection:"column",gap:6}}>
+              {sub ? (
+                // Device with sub-options: show sub-options directly
+                sub.map(({l:sl,e:se})=>(
+                  <button key={sl} onClick={()=>toggleDevice(sl)} style={{padding:"8px 12px",borderRadius:12,fontFamily:B,border:`1.5px solid ${devices.includes(sl)?C.accent:C.cardBorder}`,background:devices.includes(sl)?C.accentGlow:C.card,color:devices.includes(sl)?C.accent:C.textMuted,fontSize:13,fontWeight:500,display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
+                    <span style={{fontSize:15}}>{se}</span>{sl}
+                  </button>
+                ))
+              ) : (
+                <button onClick={()=>toggleDevice(l)} style={{padding:"8px 12px",borderRadius:12,fontFamily:B,border:`1.5px solid ${devices.includes(l)?C.accent:C.cardBorder}`,background:devices.includes(l)?C.accentGlow:C.card,color:devices.includes(l)?C.accent:C.textMuted,fontSize:13,fontWeight:500,display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
+                  <span style={{fontSize:15}}>{e}</span>{l}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{flex:1}}/><BigBtn label="✨ Rezept generieren" onClick={()=>ready&&onGenerate({time,mood,portion:persons,devices})} disabled={!ready} style={{marginTop:24}}/>
     </div>
   );
 }
@@ -405,14 +452,32 @@ function LoadingScreen() {
 function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, onViewSaved }) {
   const [showNope,setShowNope]=useState(false); const [showShopping,setShowShopping]=useState(false);
   const [saved,setSaved]=useState(false); const [saveAnim,setSaveAnim]=useState(false);
+  const [persons,setPersons]=useState(recipe?.persons||2);
+  // Sync persons if recipe changes (e.g. nope generates new recipe)
+  const [scaledRecipe,setScaledRecipe]=useState(null);
+  const [scaling,setScaling]=useState(false);
+  const displayRecipe = scaledRecipe || recipe;
   if(!recipe) return null;
+
+  const scaleRecipe=async(newPersons)=>{
+    setPersons(newPersons);
+    if(newPersons===(recipe.persons||2)){setScaledRecipe(null);return;}
+    savePersons(profile?.id, newPersons);
+    setScaling(true);
+    try{
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"scale",recipe,fromPersons:recipe.persons||2,toPersons:newPersons})});
+      const data=await resp.json();
+      if(data.recipe) setScaledRecipe({...data.recipe,persons:newPersons});
+    }catch(e){console.error(e);}
+    finally{setScaling(false);}
+  };
   const missing=recipe.ingredients?.filter(i=>!i.available)||[];
   const allR=[...(profile?.diet||[]),...(profile?.custom||[])];
 
   const handleSave=()=>{
     const rs=store.recipes.load(profile?.id);
     const entry={...recipe,id:Date.now(),savedAt:new Date().toLocaleDateString("de-DE"),profileId:profile?.id||null,status:"saved"};
-    store.recipes.save(profile?.id,[entry,...rs.slice(0,49)]);
+    store.recipes.save(profile?.id,[{...entry,persons},...rs.slice(0,49)]);
     setSaved(true);setSaveAnim(true);setTimeout(()=>setSaveAnim(false),800);
   };
 
@@ -433,9 +498,26 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
           </button>
           <button onClick={onViewSaved} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:`1px solid ${C.cardBorder}`,background:C.card,color:C.textMuted,fontSize:13,fontFamily:B}}>📚 Meine Rezepte</button>
         </div>
-        <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:14}}>{recipe.description}</p>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:(allR.length||disliked?.length)?12:0}}>
-          {[["⏱",recipe.time],["📊",recipe.difficulty],["🔥",recipe.calories]].map(([icon,val])=>(<div key={val} style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:5,fontSize:12,color:C.textMuted}}>{icon} {val}</div>))}
+        <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:14}}>{displayRecipe.description}</p>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
+          {[["⏱",displayRecipe.time],["📊",displayRecipe.difficulty],["🔥",displayRecipe.calories]].map(([icon,val])=>(<div key={val} style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:5,fontSize:12,color:C.textMuted}}>{icon} {val}</div>))}
+        </div>
+
+        {/* Person slider */}
+        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:14,padding:"12px 16px",marginBottom:(allR.length||disliked?.length)?12:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <p style={{fontSize:13,fontWeight:600,color:C.text}}>👥 Personen</p>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              {scaling&&<div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${C.accentDim}`,borderTopColor:C.accent,animation:"spin 0.8s linear infinite"}}/>}
+              <p style={{fontSize:15,fontWeight:700,color:C.accent,minWidth:20,textAlign:"center"}}>{persons}</p>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            {[1,2,3,4,5,6,7,8].map(n=>(
+              <button key={n} onClick={()=>scaleRecipe(n)} style={{flex:1,padding:"7px 0",borderRadius:8,fontFamily:B,fontSize:12,fontWeight:600,border:`1.5px solid ${persons===n?C.accent:C.cardBorder}`,background:persons===n?C.accentGlow:C.surface,color:persons===n?C.accent:C.textMuted,transition:"all 0.15s"}}>{n}</button>
+            ))}
+          </div>
+          {scaledRecipe&&<p style={{color:C.textMuted,fontSize:11,marginTop:8,textAlign:"center"}}>Mengen angepasst für {persons} {persons===1?"Person":"Personen"}</p>}
         </div>
         {(allR.length>0||disliked?.length>0)&&<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{allR.map(r=><Chip key={r} label={r} color={C.danger} dimColor="#b03030" glowColor={C.dangerGlow}/>)}{(disliked||[]).map(d=><Chip key={d} label={"Kein "+d} color={C.textMuted} dimColor={C.textDim} glowColor={C.surface}/>)}</div>}
       </div>
@@ -443,14 +525,14 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
       <div style={{padding:"22px 24px 140px",display:"flex",flexDirection:"column",gap:18}}>
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18}}>
           <h3 style={{fontFamily:D,fontSize:17,marginBottom:14}}>🛒 Zutaten</h3>
-          {recipe.ingredients?.map((ing,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:i<recipe.ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}><span style={{fontSize:14,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span><span style={{fontSize:13,color:C.textMuted}}>{ing.amount}</span></div>))}
+          {displayRecipe.ingredients?.map((ing,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:i<recipe.ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}><span style={{fontSize:14,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span><span style={{fontSize:13,color:C.textMuted}}>{ing.amount}</span></div>))}
           {missing.length>0&&(<><button onClick={()=>setShowShopping(!showShopping)} style={{marginTop:12,width:"100%",padding:"10px",borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accentDim}`,color:C.accent,fontSize:13,fontWeight:600,fontFamily:B}}>🛒 Einkaufsliste ({missing.length}) {showShopping?"▲":"▼"}</button>{showShopping&&<div style={{marginTop:10,padding:12,background:C.surface,borderRadius:10}}>{missing.map((ing,i)=><div key={i} style={{fontSize:13,color:C.accent,padding:"4px 0"}}>• {ing.name} – {ing.amount}</div>)}</div>}</>)}
         </div>
         <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:18}}>
           <h3 style={{fontFamily:D,fontSize:17,marginBottom:14}}>👨‍🍳 Zubereitung</h3>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>{recipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:14,alignItems:"flex-start"}}><div style={{minWidth:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#0f0e0c",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:4}}>{step}</p></div>))}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>{displayRecipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:14,alignItems:"flex-start"}}><div style={{minWidth:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#0f0e0c",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:4}}>{step}</p></div>))}</div>
         </div>
-        {recipe.tip&&<div style={{background:C.accentGlow,border:`1px solid ${C.accentDim}`,borderRadius:14,padding:14}}><p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>💡 <strong>Tipp:</strong> {recipe.tip}</p></div>}
+        {displayRecipe.tip&&<div style={{background:C.accentGlow,border:`1px solid ${C.accentDim}`,borderRadius:14,padding:14}}><p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>💡 <strong>Tipp:</strong> {displayRecipe.tip}</p></div>}
       </div>
 
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`linear-gradient(0deg,${C.bg} 70%,transparent)`,padding:"16px 24px 36px",display:"flex",gap:10,maxWidth:430,margin:"0 auto"}}>
@@ -546,7 +628,7 @@ function SavedRecipesScreen({ profile, profiles, onBack, onOpen }) {
 
 // ── Week Planner ──────────────────────────────────────────
 function WeekPlanner({ profile, onBack }) {
-  const empty=()=>DAYS.map((day,i)=>({day,recipe:null,loading:false,time:i>=5?"Gemütlich":"Normal"}));
+  const empty=()=>DAYS.map((day,i)=>({day,recipe:null,loading:false,time:i>=5?"Gemütlich":"Normal",device:null}));
   const [phase,setPhase]=useState("setup-ingredients");
   const [wIng,setWIng]=useState([]);
   const [wDis,setWDis]=useState([]);
@@ -555,6 +637,7 @@ function WeekPlanner({ profile, onBack }) {
   const [genAll,setGenAll]=useState(false);
   const [viewIdx,setViewIdx]=useState(null);
   const [showShopping,setShowShopping]=useState(false);
+  const [devicePickerIdx,setDevicePickerIdx]=useState(null);
   const [shoppingList,setShoppingList]=useState(null);
   const [loadingShopping,setLoadingShopping]=useState(false);
 
@@ -567,7 +650,7 @@ function WeekPlanner({ profile, onBack }) {
     const loved=store.recipes.load(profile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const used=(cur||week).filter((_,j)=>j!==idx).map(x=>x.recipe?.name).filter(Boolean);
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true,preferredCuisines:profile?.cuisines||[],availability:profile?.availability||"supermarkt"})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients:i,time:p.time,mood:p.mood,portion:p.portion,intolerances:restr,disliked:d,nope,lovedRecipes:loved,avoidNames:used,weekMode:true,preferredCuisines:profile?.cuisines||[],availability:profile?.availability||"supermarkt",devices:cur?cur[idx]?.device?[cur[idx].device]:[]:week[idx]?.device?[week[idx].device]:[]})});
       const data=await resp.json();
       if(data.recipe){setWeek(prev=>{const u=prev.map((x,j)=>j===idx?{...x,recipe:data.recipe,loading:false}:x);store.week.save(profile?.id,u);return u;});}
       else setWeek(prev=>prev.map((x,j)=>j===idx?{...x,loading:false}:x));
@@ -717,13 +800,26 @@ function WeekPlanner({ profile, onBack }) {
                   <button onClick={()=>genDay(i,week)} disabled={d.loading||genAll} style={{padding:"7px 12px",borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accentDim}`,color:C.accent,fontSize:12,fontFamily:B,fontWeight:600}}>{d.loading?"...":d.recipe?"🔄":"Generieren"}</button>
                 </div>
               </div>
-              <div style={{display:"flex",gap:6}}>
+              <div style={{display:"flex",gap:6,marginBottom:6}}>
                 {[["Schnell","⚡"],["Normal","🕐"],["Gemütlich","🌿"]].map(([t,e])=>(
                   <button key={t} onClick={()=>setWeek(prev=>{const u=prev.map((x,j)=>j===i?{...x,time:t}:x);store.week.save(profile?.id,u);return u;})} style={{flex:1,padding:"5px 4px",borderRadius:8,fontFamily:B,fontSize:11,fontWeight:500,border:`1px solid ${d.time===t?C.accent:C.cardBorder}`,background:d.time===t?C.accentGlow:C.surface,color:d.time===t?C.accent:C.textMuted,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
                     <span>{e}</span>{t}
                   </button>
                 ))}
               </div>
+              <button onClick={()=>setDevicePickerIdx(devicePickerIdx===i?null:i)} style={{padding:"5px 12px",borderRadius:8,fontFamily:B,fontSize:11,fontWeight:500,border:`1px solid ${d.device?C.accent:C.cardBorder}`,background:d.device?C.accentGlow:C.surface,color:d.device?C.accent:C.textMuted,display:"flex",alignItems:"center",gap:5}}>
+                {d.device ? (DEVICES.find(x=>x.l===d.device)?.e+" "+d.device) : "🍳 Gerät (optional)"}
+              </button>
+              {devicePickerIdx===i&&(
+                <div style={{marginTop:6,background:C.surface,borderRadius:12,padding:10,display:"flex",flexWrap:"wrap",gap:6}}>
+                  {d.device&&<button onClick={()=>{setWeek(prev=>{const u=prev.map((x,j)=>j===i?{...x,device:null}:x);store.week.save(profile?.id,u);return u;});setDevicePickerIdx(null);}} style={{padding:"6px 12px",borderRadius:8,fontFamily:B,fontSize:12,border:`1px solid ${C.danger}`,background:C.dangerGlow,color:C.danger}}>✕ Kein Gerät</button>}
+                  {DEVICES.flatMap(({l,e,sub})=>sub?sub.map(({l:sl,e:se})=>({l:sl,e:se})):[{l,e}]).map(({l:dl,e:de})=>(
+                    <button key={dl} onClick={()=>{setWeek(prev=>{const u=prev.map((x,j)=>j===i?{...x,device:dl}:x);store.week.save(profile?.id,u);return u;});setDevicePickerIdx(null);}} style={{padding:"6px 12px",borderRadius:8,fontFamily:B,fontSize:12,border:`1px solid ${d.device===dl?C.accent:C.cardBorder}`,background:d.device===dl?C.accentGlow:C.card,color:d.device===dl?C.accent:C.textMuted,display:"flex",alignItems:"center",gap:4}}>
+                      <span>{de}</span>{dl}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             {d.loading?(
               <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0"}}><Spin size={18}/><p style={{color:C.textMuted,fontSize:13}}>Wird generiert...</p></div>
@@ -767,7 +863,7 @@ export default function Mahlzeit() {
     const loved=store.recipes.load(activeProfile?.id).filter(r=>r.status==="loved").slice(0,8).map(r=>r.name);
     const lastRecipe = nope && recipe ? recipe.name : null;
     try{
-      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt"})});
+      const resp=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"recipe",ingredients,time:finalPrefs.time,mood:finalPrefs.mood,portion:finalPrefs.portion,intolerances:restr,disliked,nope,lovedRecipes:loved,avoidName:lastRecipe,preferredCuisines:activeProfile?.cuisines||[],availability:activeProfile?.availability||"supermarkt",devices:finalPrefs.devices||[]})});
       const data=await resp.json();
       if(data.recipe){setRecipe(data.recipe);setScreen("recipe");}
     }catch(err){
