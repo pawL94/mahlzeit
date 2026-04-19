@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     if (type === "scan") {
       const { base64, mimeType } = params;
       const text = await callClaudeWithImage(
-        'Analysiere dieses Foto eines Kühlschranks sehr sorgfältig. Lies ALLE sichtbaren Texte auf Verpackungen und Etiketten. Erkenne konkrete Produktnamen: Mozzarella nicht Kaese, Parmesan nicht Kaese, Feta nicht Kaese. Schau auch in Ecken und Schubladen. Antworte NUR mit JSON-Array auf Deutsch: ["Mozzarella","Hafermilch","Karotten"]. Kein Markdown.',
+        'Analysiere dieses Foto eines Kuehlschranks. Erkenne nur Lebensmittel und Zutaten die du KLAR und SICHER erkennen kannst. WICHTIGE REGELN: 1. Nur konkrete Lebensmittel nennen: Mozzarella, Karotten, Milch - KEINE Markennamen wie Alnatura, Rewe oder Pringles. 2. Nur nennen was du wirklich siehst - lieber weniger als halluzinieren. 3. Bei unscharfen oder unklaren Produkten: weglassen. 4. Produktnamen konkret: Mozzarella nicht Kaese, Feta nicht Kaese. Antworte NUR mit JSON-Array auf Deutsch: ["Mozzarella","Karotten","Milch"]. Kein Markdown.',
         base64, mimeType
       );
       const found = JSON.parse(text.replace(/```json|```/g, "").trim());
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       const ingList = ingredients?.length > 0 ? ingredients.join(", ") : "keine – wähle ein kreatives Gericht";
 
       const intoleranceMap = {
-        "Laktosefrei": "Laktose: laktosefreie Alternativen ODER Gerichte ohne Milchprodukte.",
+        "Laktosefrei": "LAKTOSEFREI: Keine normalen Milchprodukte! Normaler Käse (Mozzarella, Feta, Parmesan, Gouda etc.), normale Milch, normaler Joghurt, normale Sahne und Butter enthalten Laktose. Erlaubt: explizit laktosefreie Produkte (laktosefreie Milch, laktosefreier Joghurt) ODER Gerichte die komplett ohne Milchprodukte auskommen. Im Zweifel: kein Milchprodukt verwenden.",
         "Glutenfrei": "Gluten: glutenfreie Alternativen ODER Gerichte ohne Gluten.",
         "Vegetarisch": "Kein Fleisch, kein Fisch. Eier/Milch erlaubt.",
         "Vegan": "Keine tierischen Produkte.",
@@ -91,12 +91,11 @@ export default async function handler(req, res) {
         "Keine Meeresfrüchte": "Keine Meeresfrüchte.",
       };
 
-      const availabilityMap = {
-        "supermarkt": "WICHTIG: Verwende AUSSCHLIESSLICH Zutaten die in einem normalen deutschen Supermarkt (Rewe, Edeka, Lidl, Aldi) erhältlich sind. Keine Spezialgeschäfte, kein Asiamarkt, keine Online-Bestellungen. Lieber ein einfacheres Gericht als exotische Zutaten.",
-        "markt": "Zutaten dürfen auch in gut sortierten Supermärkten oder Feinkostläden erhältlich sein (z.B. Miso, Tahini, Kokosmilch, Pesto, Crème fraîche). Aber keine obskuren Spezialzutaten die man extra bestellen müsste.",
-        "alles": "Alle Zutaten erlaubt, auch exotische aus Asiamarkt oder Spezialgeschäften.",
-      };
-      const availabilityHint = availabilityMap[availability] || availabilityMap["supermarkt"];
+      const availabilityHint = availability === "supermarkt"
+        ? "Nur Zutaten aus normalem Supermarkt (Rewe/Edeka/Lidl) – keine Spezialgeschäfte."
+        : availability === "markt"
+        ? "Zutaten aus gut sortiertem Supermarkt erlaubt (Miso, Tahini, Kokosmilch ok)."
+        : "Alle Zutaten erlaubt.";
 
       const lines = [];
       lines.push(availabilityHint);
@@ -110,9 +109,9 @@ export default async function handler(req, res) {
       if (weekMode) lines.push("Wochenplanung: ausgewogenes Abendessen. WICHTIG: Die verfügbaren Zutaten sind der Wochenvorrat – jede einzelne Zutat darf NUR in maximal 2 von 7 Gerichten vorkommen. Nutze heute NUR 1-2 der verfügbaren Zutaten und wähle die Küche " + cuisine + " – auch wenn diese Küche die Zutaten normalerweise nicht verwendet.");
       if (devices?.length > 0) {
         const deviceHints = {
-          "Airfryer (1 Korb)": "Airfryer verwenden: Das Hauptgericht wird vollständig im Airfryer zubereitet – KEINE Pfanne, KEIN Backofen parallel. Ein Topf für Beilagen wie Nudeln oder Reis ist erlaubt. Temperatur in °C und Zeit in Minuten präzise angeben. Vorheizen erwähnen. Die Zubereitung muss schlüssig sein – kein unnötiges Wechseln zwischen Geräten.",
-          "Airfryer (2 Körbe)": "Dual-Basket Airfryer verwenden: Hauptkomponente und Beilage werden gleichzeitig in beiden Körben zubereitet – KEINE Pfanne, KEIN Backofen parallel. Ein Topf für Nudeln oder Reis als Beilage ist erlaubt wenn nötig. Für jeden Korb Inhalt, Temperatur und Zeit separat angeben. Zubereitung muss schlüssig sein.",
-          "Thermomix": "Thermomix verwenden: Das Hauptgericht wird vollständig im Thermomix zubereitet – KEINE Pfanne, KEIN Backofen parallel. Alle Schritte mit konkreten TM-Funktionen (z.B. 'Stufe 4, 100°C, 10 Min' oder 'Varoma, Stufe 2, 20 Min'). Nur Rezepte wählen die wirklich im Thermomix funktionieren. Zubereitung muss schlüssig sein.",
+          "Airfryer (1 Korb)": "Airfryer: Hauptgericht im Airfryer, °C+Min angeben, vorheizen. Topf für Beilagen ok, keine Pfanne/Backofen.",
+          "Airfryer (2 Körbe)": "Dual-Basket Airfryer: beide Körbe gleichzeitig nutzen, je Korb Inhalt+°C+Min. Topf für Nudeln/Reis ok, keine Pfanne/Backofen.",
+          "Thermomix": "Thermomix: alle Schritte mit TM-Funktionen (Stufe/°C/Min/Varoma). Keine Pfanne/Backofen parallel.",
         };
         const deviceList = devices.map(d => deviceHints[d] || ("Gerät nutzen: " + d)).join(" | ");
         lines.push("KÜCHENGERÄTE HEUTE: " + deviceList);
@@ -131,11 +130,13 @@ REGELN:
 3. available:true NUR wenn Zutat EXAKT in der Zutaten-Liste steht. Im Zweifel false.
 4. Küche: ${nope === "anderes_gericht" ? cuisine + " – PFLICHT!" : cuisine} – diese Küche MUSS das Gericht prägen.
 5. Kreativ, keine Standardgerichte. Das Gericht soll zur Küche passen, nicht zur Zutatenliste.
+6. Zutaten NICHT still ersetzen: Wenn eine Vorratszutat nicht passt einfach ignorieren und anderes Gericht wählen.
+7. Unvertraeglichkeiten haben ABSOLUTE PRIORITAET und ueberschreiben jede Vorratszutat.
 
 Antworte NUR mit JSON (kein Markdown):
 {"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
 
-      const text = await callClaude(prompt);
+      const text = await callClaude(prompt, 650);
       const recipe = JSON.parse(text.replace(/```json|```/g, "").trim());
       return res.status(200).json({ recipe });
     }
