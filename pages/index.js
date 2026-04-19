@@ -239,8 +239,8 @@ function IngredientsScreen({ onNext, onSkip }) {
     setScanning(true);setScanDone(false);setScanError(false);
     try{
       const comp=await new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{
-        // Step 1: Resize to max 768px (still enough for label reading, costs ~30% less tokens)
-        const c=document.createElement("canvas"),M=768;let w=img.width,h=img.height;
+        // Step 1: Resize to max 1024px for better label readability
+        const c=document.createElement("canvas"),M=1024;let w=img.width,h=img.height;
         if(w>M||h>M){if(w>h){h=Math.round(h*M/w);w=M;}else{w=Math.round(w*M/h);h=M;}}
         c.width=w;c.height=h;
         const ctx=c.getContext("2d");
