@@ -3,9 +3,9 @@ import Head from "next/head";
 
 // ── Design Tokens ─────────────────────────────────────────
 const C = {
-  bg:"#FEFCF7", card:"#FFFFFF", cardBorder:"#EAE2D6",
+  bg:"#FEFCF7", card:"#FFFFFF", cardBorder:"#D8CFBF",
   accent:"#D97706", accentDim:"#B45309", accentGlow:"rgba(217,119,6,0.10)",
-  text:"#1C1410", textMuted:"#6B5E52", textDim:"#B0A396", surface:"#F5F0E8",
+  text:"#1C1410", textMuted:"#5A4E46", textDim:"#7C6E64", surface:"#F5F0E8",
   danger:"#DC2626", dangerGlow:"rgba(220,38,38,0.08)",
   green:"#16A34A", greenGlow:"rgba(22,163,74,0.10)",
   purple:"#7C3AED", purpleGlow:"rgba(124,58,237,0.10)",
@@ -95,14 +95,14 @@ const TagToggle = ({ label, emoji, selected, color, glowColor, onClick }) => (
 const SL = ({ children }) => <p style={{ color:C.textMuted, fontSize:11, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>{children}</p>;
 
 const BigBtn = ({ label, onClick, disabled, secondary, color }) => (
-  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?"transparent":disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?C.textDim:"#0f0e0c", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 4px 20px rgba(217,119,6,0.28)":"none", transition:"all 0.2s" }}>
+  <button onClick={onClick} disabled={disabled} style={{ width:"100%", padding:"16px", borderRadius:50, fontFamily:B, background:secondary?C.surface:disabled?C.surface:color?`linear-gradient(135deg,${color},${color}cc)`:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:secondary?C.textMuted:disabled?"#A09080":"#1C1410", border:secondary?`1.5px solid ${C.cardBorder}`:"none", fontWeight:700, fontSize:15, boxShadow:(!secondary&&!disabled)?"0 4px 20px rgba(217,119,6,0.28)":"none", transition:"all 0.2s" }}>
     {label}
   </button>
 );
 
 const PBar = ({ step, total }) => (
   <div style={{ display:"flex", gap:5, marginBottom:20 }}>
-    {Array.from({length:total}).map((_,i)=>(<div key={i} style={{ height:3, flex:1, borderRadius:2, background:i<step?C.accent:C.cardBorder, transition:"background 0.3s" }}/>))}
+    {Array.from({length:total}).map((_,i)=>(<div key={i} style={{ height:3, flex:1, borderRadius:2, background:i<step?C.accent:'#D4C8BC', transition:"background 0.3s" }}/>))}
   </div>
 );
 
@@ -111,7 +111,7 @@ const Spin = ({ size=28, color=C.accent }) => (
 );
 
 const BackBtn = ({ onClick }) => (
-  <button onClick={onClick} style={{ color:C.textMuted, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:5, fontFamily:B }}>← Zurück</button>
+  <button onClick={onClick} style={{ color:C.accent, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:5, fontFamily:B }}>← Zurück</button>
 );
 
 // ── Profile Editor ────────────────────────────────────────
@@ -267,7 +267,7 @@ function SplashScreen({ profiles, onStart, onQuickStart, onManageProfiles, onVie
       )}
 
       {/* Main actions */}
-      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#FFFFFF", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(245,166,35,0.25)", marginBottom:10 }}>
+      <button onClick={()=>onStart(active)} style={{ background:`linear-gradient(135deg,${C.accent},${C.accentDim})`, color:"#FFFFFF", fontWeight:700, fontSize:16, padding:"16px", borderRadius:50, fontFamily:B, boxShadow:"0 8px 32px rgba(217,119,6,0.25)", marginBottom:10 }}>
         Rezept finden →
       </button>
       <button onClick={()=>onWeekPlanner(active)} style={{ background:C.card, border:`1.5px solid ${C.cardBorder}`, color:C.text, fontWeight:600, fontSize:15, padding:"14px", borderRadius:50, fontFamily:B, marginBottom:16 }}>
@@ -364,7 +364,7 @@ function IngredientsScreen({ onNext, onSkip }) {
       {/* Scan buttons */}
       {!scanning&&scanCount<MAX_SCANS&&(
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <button onClick={()=>triggerScan("scan-camera")} style={{padding:"12px 8px",borderRadius:14,background:`linear-gradient(135deg,rgba(245,166,35,0.15),rgba(196,125,14,0.08))`,border:`1.5px solid ${C.accentDim}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+          <button onClick={()=>triggerScan("scan-camera")} style={{padding:"12px 8px",borderRadius:14,background:`linear-gradient(135deg,rgba(217,119,6,0.12),rgba(180,83,9,0.06))`,border:`1.5px solid ${C.accentDim}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
             <span style={{fontSize:22}}>📷</span><p style={{color:C.accent,fontWeight:600,fontSize:13}}>Kamera</p><p style={{color:C.textMuted,fontSize:11}}>Direkt fotografieren</p>
           </button>
           <button onClick={()=>triggerScan("scan-gallery")} style={{padding:"12px 8px",borderRadius:14,background:C.card,border:`1.5px solid ${C.cardBorder}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
@@ -374,7 +374,7 @@ function IngredientsScreen({ onNext, onSkip }) {
       )}
       {!scanning&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
         <p style={{color:C.textDim,fontSize:11}}>Bis zu 3 Fotos – z.B. Kühlschrank + Vorratskammer</p>
-        {scanCount>0&&<p style={{color:scanCount>=MAX_SCANS?C.danger:C.textDim,fontSize:11,fontWeight:600,flexShrink:0}}>{scanCount}/{MAX_SCANS} genutzt</p>}
+        {scanCount>0&&<p style={{color:scanCount>=MAX_SCANS?C.danger:C.textMuted,fontSize:11,fontWeight:600,flexShrink:0}}>{scanCount}/{MAX_SCANS} genutzt</p>}
       </div>}
 
       {/* Manual input */}
@@ -607,7 +607,7 @@ function LoadingScreen({ streamText="" }) {
       </div>
       <div style={{padding:"20px 24px 120px",display:"flex",flexDirection:"column",gap:16}}>
         {ingredients&&(
-          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,animation:"fadeUp 0.3s ease"}}>
+          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow,animation:"fadeUp 0.3s ease"}}>
             <h3 style={{fontFamily:D,fontSize:16,marginBottom:12}}>🛒 Zutaten</h3>
             {ingredients.map((ing,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<ingredients.length-1?`1px solid ${C.cardBorder}`:"none"}}><span style={{fontSize:13,color:ing.available?C.text:C.accent}}>{ing.available?"✅":"🛒"} {ing.name}</span><span style={{fontSize:12,color:C.textMuted}}>{ing.amount}</span></div>))}
             {!steps&&<div style={{marginTop:10,display:"flex",alignItems:"center",gap:8}}><Spin size={14}/><p style={{color:C.textMuted,fontSize:12}}>Zubereitung wird geladen...</p></div>}
@@ -615,7 +615,7 @@ function LoadingScreen({ streamText="" }) {
         )}
         {!ingredients&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"16px 0"}}><Spin size={18}/><p style={{color:C.textMuted,fontSize:14}}>Zutaten werden zusammengestellt...</p></div>}
         {steps&&(
-          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,animation:"fadeUp 0.3s ease"}}>
+          <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow,animation:"fadeUp 0.3s ease"}}>
             <h3 style={{fontFamily:D,fontSize:16,marginBottom:12}}>👨‍🍳 Zubereitung</h3>
             {steps.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:13,color:C.textMuted,lineHeight:1.6,paddingTop:3}}>{step}</p></div>))}
           </div>
@@ -710,7 +710,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 
       <div style={{padding:"20px 24px 140px",display:"flex",flexDirection:"column",gap:16}}>
         {/* Ingredients */}
-        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16}}>
+        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow}}>
           <h3 style={{fontFamily:D,fontSize:16,marginBottom:4}}>🛒 Zutaten</h3>
           <p style={{color:C.textDim,fontSize:11,marginBottom:10}}>Antippen um Einkaufsstatus zu ändern</p>
           {displayRecipe.ingredients?.map((ing,i)=>{ const avail=getAvail(ing); return (
@@ -726,7 +726,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
         </div>
 
         {/* Steps */}
-        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16}}>
+        <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:18,padding:16,boxShadow:C.shadow}}>
           <h3 style={{fontFamily:D,fontSize:16,marginBottom:14}}>👨‍🍳 Zubereitung</h3>
           {displayRecipe.steps?.map((step,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:i<displayRecipe.steps.length-1?14:0}}><div style={{minWidth:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{i+1}</div><p style={{fontSize:14,color:C.textMuted,lineHeight:1.6,paddingTop:2}}>{step}</p></div>))}
         </div>
@@ -735,9 +735,9 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
       </div>
 
       {/* Bottom bar */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`linear-gradient(0deg,${C.bg} 60%,transparent)`,padding:"14px 24px 34px",display:"flex",gap:10,maxWidth:430,margin:"0 auto"}}>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`linear-gradient(0deg,${C.bg} 70%,rgba(254,252,247,0) 100%)`,padding:"14px 24px 34px",display:"flex",gap:10,maxWidth:430,margin:"0 auto"}}>
         <button onClick={()=>setShowNope(true)} style={{flex:1,padding:"14px",borderRadius:50,border:`1.5px solid ${C.accent}`,background:C.accentGlow,color:C.accent,fontWeight:700,fontSize:14,fontFamily:B}}>🔄 Neuer Vorschlag</button>
-        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(245,166,35,0.28)"}}>Fertig ✓</button>
+        <button onClick={()=>onRate()} style={{flex:2,padding:"14px",borderRadius:50,background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#FFFFFF",fontWeight:700,fontSize:15,fontFamily:B,boxShadow:"0 6px 20px rgba(217,119,6,0.28)"}}>Fertig ✓</button>
       </div>
 
       {/* Nope sheet */}
@@ -974,7 +974,7 @@ function WeekPlanner({ profile, onBack }) {
 
       <div style={{display:"flex",gap:8,marginBottom:10}}>
         <button onClick={()=>setPhase("setup-ingredients")} style={{flex:1,padding:"10px",borderRadius:50,background:C.card,border:`1.5px solid ${C.cardBorder}`,color:C.textMuted,fontWeight:600,fontSize:13,fontFamily:B}}>← Neu planen</button>
-        <button onClick={()=>generateAll(wPrefs,wIng,[])} disabled={genAll} style={{flex:2,padding:"10px",borderRadius:50,background:genAll?C.surface:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:genAll?C.textDim:"#0f0e0c",fontWeight:700,fontSize:13,fontFamily:B,boxShadow:genAll?"none":"0 4px 16px rgba(245,166,35,0.22)"}}>
+        <button onClick={()=>generateAll(wPrefs,wIng,[])} disabled={genAll} style={{flex:2,padding:"10px",borderRadius:50,background:genAll?C.surface:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:genAll?"#A09080":"#1C1410",fontWeight:700,fontSize:13,fontFamily:B,boxShadow:genAll?"none":"0 4px 16px rgba(217,119,6,0.22)"}}>
           {genAll?"Generiert...":"✨ Alle neu"}
         </button>
       </div>
@@ -1038,11 +1038,11 @@ function WeekPlanner({ profile, onBack }) {
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
                   <span style={{fontSize:20}}>{d.recipe.emoji||"🍽"}</span>
                   <div style={{flex:1}}><p style={{fontWeight:600,fontSize:14,color:C.text}}>{d.recipe.name}</p><p style={{color:C.textMuted,fontSize:12}}>{d.recipe.time} · {d.recipe.difficulty}</p></div>
-                  <span style={{color:C.textDim,fontSize:16}}>›</span>
+                  <span style={{color:C.accent,fontSize:16}}>›</span>
                 </div>
                 <p style={{color:C.textMuted,fontSize:13,lineHeight:1.5}}>{d.recipe.description}</p>
               </button>)
-            :(<p style={{color:C.textDim,fontSize:13,marginTop:4}}>Noch kein Gericht geplant</p>)}
+            :(<p style={{color:C.textMuted,fontSize:13,marginTop:4}}>Noch kein Gericht geplant</p>)}
           </div>
         ))}
       </div>
