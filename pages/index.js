@@ -1097,10 +1097,33 @@ Antworte NUR mit JSON:
           if(line.startsWith("event: error")) throw new Error("Stream error");
         }
       }
-      const recipe=JSON.parse(fullText.replace(/```json|```/g,"").trim());
-      setRecipe(recipe);setScreen("recipe");
+      if(!fullText.trim()){
+        console.error("Empty response from stream");
+        setScreen("streamError");
+        return;
+      }
+      try{
+        const cleaned=fullText.replace(/```json|```/g,"").trim();
+        const recipe=JSON.parse(cleaned);
+        setRecipe(recipe);setScreen("recipe");
+      }catch(parseErr){
+        console.error("JSON parse error:", parseErr.message, "\nRaw:", fullText.slice(-200));
+        // Try to salvage partial JSON
+        try{
+          const match=fullText.match(/\{[\s\S]*"name"[\s\S]*"steps"[\s\S]*\]/);
+          if(match){
+            const partial=match[0]+(fullText.endsWith("}")?"":","tip":"Guten Appetit!"}");
+            const recipe=JSON.parse(partial);
+            setRecipe(recipe);setScreen("recipe");
+          } else {
+            setScreen("streamError");
+          }
+        }catch(e){
+          setScreen("streamError");
+        }
+      }
     }catch(err){
-      console.error("Stream error:", err);
+      console.error("Stream error:", err.message);
       setScreen("streamError");
     }
   };
@@ -1125,7 +1148,7 @@ Antworte NUR mit JSON:
           <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",background:C.bg}}>
             <span style={{fontSize:48,marginBottom:20}}>😕</span>
             <h2 style={{fontFamily:D,fontSize:24,fontWeight:700,marginBottom:12}}>Etwas ist schiefgelaufen</h2>
-            <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:32,maxWidth:280}}>Das Rezept konnte nicht vollständig geladen werden. Bitte versuche es nochmal.</p>
+            <p style={{color:C.textMuted,fontSize:14,lineHeight:1.6,marginBottom:32,maxWidth:280}}>Das Rezept konnte nicht geladen werden – meistens liegt das an einer instabilen Verbindung. Bitte versuche es nochmal.</p>
             <button onClick={()=>{setStreamText("");callAPI(prefs);}} style={{background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,color:"#0f0e0c",fontWeight:700,fontSize:15,padding:"15px 40px",borderRadius:50,fontFamily:B,boxShadow:"0 8px 24px rgba(245,166,35,0.3)",marginBottom:12}}>
               🔄 Nochmal versuchen
             </button>
