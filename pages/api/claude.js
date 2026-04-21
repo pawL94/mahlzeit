@@ -68,6 +68,13 @@ export default async function handler(req, res) {
 
       const timeMap = { "Schnell": "maximal 15 Minuten", "Normal": "maximal 30 Minuten", "Gemütlich": "60 bis 90 Minuten" };
       const timeLimit = timeMap[time] || "maximal 30 Minuten";
+      const moodHints = {
+        "Herzhaft": "Herzhaft: vollstaendiges sattmachendes Gericht mit Protein UND Saettigungsbeilage (Nudeln, Reis, Kartoffeln, Brot, Couscous o.ae.) – ausser bei Suppen/Eintoepfen die selbst saettigen.",
+        "Leicht": "Leicht: wenig Kalorien, viel Gemuese, keine schweren Saucen oder grossen Kohlenhydrat-Portionen.",
+        "Dessert": "Dessert: eine Nachspeise oder suesses Gericht.",
+        "Ueberrasch mich!": "Freie Wahl – ueberrasche mit einer ungewoehnlichen kreativen Idee.",
+      };
+      const moodHint = moodHints[mood] || "";
 
       const allCuisines = ["Italienisch","Asiatisch","Mexikanisch","Mediterran","Deutsch","Indisch","Amerikanisch","Französisch","Griechisch","Japanisch","Marokkanisch","Türkisch","Spanisch","Koreanisch","Vietnamesisch","Libanesisch"];
       // Use preferred cuisines from profile if set, otherwise all cuisines
@@ -98,6 +105,7 @@ export default async function handler(req, res) {
         : "Alle Zutaten erlaubt.";
 
       const lines = [];
+      if(moodHint) lines.push(moodHint);
       lines.push(availabilityHint);
       if (intolerances?.length > 0) lines.push("UNVERTRÄGLICHKEITEN: " + intolerances.map(i => intoleranceMap[i] || "Vermeiden: " + i).join(" | "));
       if (disliked?.length > 0) lines.push("Heute nicht gewünscht: " + disliked.join(", "));
