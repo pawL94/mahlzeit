@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       const timeMap = { "Schnell": "maximal 15 Minuten", "Normal": "maximal 30 Minuten", "Gemütlich": "60 bis 90 Minuten" };
       const timeLimit = timeMap[time] || "maximal 30 Minuten";
       const moodHints = {
-        "Herzhaft": "Herzhaft: vollstaendiges sattmachendes Gericht mit Protein UND Saettigungsbeilage (Nudeln, Reis, Kartoffeln, Brot, Couscous o.ae.) – ausser bei Suppen/Eintoepfen die selbst saettigen.",
+        "Herzhaft": "Herzhaft: sattmachendes vollstaendiges Gericht. Protein = Fleisch, Fisch oder Eier (kein Tofu ausser explizit vegetarisch). PFLICHT: Saettigungsbeilage dazu (Nudeln, Reis, Kartoffeln, Couscous, Brot) – ausser das Gericht ist ein Eintopf/Suppe der selbst saettigt.",
         "Leicht": "Leicht: wenig Kalorien, viel Gemuese, keine schweren Saucen oder grossen Kohlenhydrat-Portionen.",
         "Dessert": "Dessert: eine Nachspeise oder suesses Gericht.",
         "Ueberrasch mich!": "Freie Wahl – ueberrasche mit einer ungewoehnlichen kreativen Idee.",
@@ -117,8 +117,8 @@ export default async function handler(req, res) {
       if (weekMode) lines.push("Wochenplanung: ausgewogenes Abendessen. WICHTIG: Die verfügbaren Zutaten sind der Wochenvorrat – jede einzelne Zutat darf NUR in maximal 2 von 7 Gerichten vorkommen. Nutze heute NUR 1-2 der verfügbaren Zutaten und wähle die Küche " + cuisine + " – auch wenn diese Küche die Zutaten normalerweise nicht verwendet.");
       if (devices?.length > 0) {
         const deviceHints = {
-          "Airfryer (1 Korb)": "Airfryer: Hauptgericht im Airfryer, °C+Min angeben, vorheizen. Topf für Beilagen ok, keine Pfanne/Backofen.",
-          "Airfryer (2 Körbe)": "Dual-Basket Airfryer: beide Körbe gleichzeitig nutzen, je Korb Inhalt+°C+Min. Topf für Nudeln/Reis ok, keine Pfanne/Backofen.",
+          "Airfryer (1 Korb)": "Airfryer: Hauptkomponente (Protein) im Airfryer mit °C und Min. Beilage (Reis, Nudeln, Kartoffeln) parallel im Topf – das ist erwünscht und macht das Gericht vollstaendig. Keine Pfanne oder Backofen fuer die Hauptkomponente.",
+          "Airfryer (2 Körbe)": "Dual-Basket Airfryer: Protein in Korb 1, Gemuese oder Beilage in Korb 2 – je mit °C und Min. Bei Bedarf zusaetzlich Nudeln/Reis im Topf. Das Gericht muss vollstaendig und saettigend sein.",
           "Thermomix": "Thermomix: alle Schritte mit TM-Funktionen (Stufe/°C/Min/Varoma). Keine Pfanne/Backofen parallel.",
         };
         const deviceList = devices.map(d => deviceHints[d] || ("Gerät nutzen: " + d)).join(" | ");
