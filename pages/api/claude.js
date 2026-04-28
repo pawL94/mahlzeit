@@ -60,7 +60,7 @@ async function callClaudeWithImage(prompt, base64, mimeType) {
 
 // ── Trending recipes cache ───────────────────────────────
 let trendingCache = { recipes: [], fetchedAt: 0 };
-const TRENDS_URL = "https://raw.githubusercontent.com/pawL94/recipe-trends/main/trends.json";
+const TRENDS_URL = "https://raw.githubusercontent.com/pawL94/recipe-trends-/main/trends.json";
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 Stunden
 
 export async function getTrendingRecipes() {
