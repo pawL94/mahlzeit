@@ -325,7 +325,28 @@ function IngredientsScreen({ onNext, onSkip }) {
     const file = e.target.files?.[0]; if(!file) return;
     setScanning(true); setScanDone(false); setScanError(false);
     try {
-      const comp = await new Promise((res,rej)=>{ const img=new Image(), url=URL.createObjectURL(file); img.onload=()=>{ const c=document.createElement("canvas"),M=1024; let w=img.width,h=img.height; if(w>M||h>M){if(w>h){h=Math.round(h*M/w);w=M;}else{w=Math.round(w*M/h);h=M;}} c.width=w;c.height=h; const ctx=c.getContext("2d"); ctx.drawImage(img,0,0,w,h); let data=c.toDataURL("image/webp",0.7); if(!data.startsWith("data:image/webp")){data=c.toDataURL("image/jpeg",0.65);} URL.revokeObjectURL(url); res(data.split(",")[1]); }; img.onerror=rej; img.src=url; });
+      const comp = await new Promise((res,rej)=>{ const img=new Image(), url=URL.createObjectURL(file); img.onload=()=>{
+        // 1536px: optimal für Etikettenerkennung – genug Detail ohne excessive Token-Kosten
+        const M=1536; let w=img.width, h=img.height;
+        if(w>M||h>M){ if(w>h){h=Math.round(h*M/w);w=M;}else{w=Math.round(w*M/h);h=M;} }
+        const c=document.createElement("canvas"); c.width=w; c.height=h;
+        const ctx=c.getContext("2d");
+        // Kontrast und Helligkeit verbessern für bessere Etikettenerkennung
+        ctx.filter="contrast(1.15) brightness(1.05) saturate(1.1)";
+        ctx.drawImage(img,0,0,w,h);
+        ctx.filter="none";
+        // Schärfe-Unschärfemaske: schärferes Bild über Overlay
+        ctx.globalCompositeOperation="overlay";
+        ctx.globalAlpha=0.08;
+        ctx.filter="blur(0px)";
+        ctx.drawImage(img,0,0,w,h);
+        ctx.globalCompositeOperation="source-over";
+        ctx.globalAlpha=1;
+        // WebP mit hoher Qualität für Texterkennung
+        let data=c.toDataURL("image/webp",0.88);
+        if(!data.startsWith("data:image/webp")){data=c.toDataURL("image/jpeg",0.82);}
+        URL.revokeObjectURL(url); res(data.split(",")[1]);
+      }; img.onerror=rej; img.src=url; });
       const mimeType = comp.startsWith("/9j") ? "image/jpeg" : "image/webp";
       const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"scan",base64:comp,mimeType})});
       const data = await resp.json();
