@@ -1080,36 +1080,27 @@ export default function Mahlzeit() {
     setStreamText("");
 
     try {
-      const timeMap={"Schnell":"maximal 15 Minuten","Normal":"maximal 30 Minuten","Gemütlich":"60 bis 90 Minuten"};
-      const timeLimit=timeMap[finalPrefs.time]||"maximal 30 Minuten";
-      const allCuisines=["Italienisch","Asiatisch","Mexikanisch","Mediterran","Deutsch","Indisch","Amerikanisch","Französisch","Griechisch","Japanisch","Marokkanisch","Türkisch","Spanisch","Koreanisch","Vietnamesisch","Libanesisch"];
-      const cuisinePool=(activeProfile?.cuisines?.length>0)?activeProfile.cuisines:allCuisines;
-      const cuisine=cuisinePool[Math.floor(Math.random()*cuisinePool.length)];
-      const reqId=Math.random().toString(36).substring(7);
-      const ingList=ingredients?.length>0?ingredients.join(", "):"keine – wähle ein kreatives Gericht";
-      const intolHint=restr.length>0?"UNVERTRÄGLICHKEITEN: "+restr.map(i=>({
-        "Laktosefrei":"KEIN normaler Käse/Milch/Sahne/Joghurt – laktosefrei oder weglassen",
-        "Glutenfrei":"Kein Weizen/Gluten – glutenfrei oder weglassen",
-        "Vegetarisch":"Kein Fleisch, kein Fisch","Vegan":"Keine tierischen Produkte",
-        "Kein Fisch":"Kein Fisch","Kein Schweinefleisch":"Kein Schweinefleisch",
-        "Nussallergie":"Keine Nüsse","Eierallergie":"Keine Eier","Sojaallergie":"Kein Soja","Keine Meeresfrüchte":"Keine Meeresfrüchte",
-      }[i]||"Vermeiden: "+i)).join(" | "):"";
-      const availHint=activeProfile?.availability==="supermarkt"?"Nur Zutaten aus normalem Supermarkt.":activeProfile?.availability==="markt"?"Gut sortierter Supermarkt ok.":"Alle Zutaten erlaubt.";
-      const lines=[availHint];
-      if(intolHint) lines.push(intolHint);
-      if(finalPrefs.disliked?.length>0) lines.push("Heute nicht: "+finalPrefs.disliked.join(", "));
-      if(mustUse?.length>0) lines.push("PFLICHT – diese Zutaten MÜSSEN im Rezept vorkommen: "+mustUse.join(", "));
-      if(noShopping) lines.push("KEIN EINKAUF: Nur vorhandene Zutaten. Grundzutaten wie Salz, Pfeffer, Öl, Butter, Mehl, Gewürze darf die KI voraussetzen.");
-      if(nope==="zu_aufwendig") lines.push("Einfacheres Gericht bitte.");
-      if(nope==="anderes_gericht") lines.push("VÖLLIG andere Küche: "+cuisine);
       const allAvoided=[...rejectedRecipes,...(lastRecipe?[lastRecipe]:[])];
-      if(allAvoided.length>0) lines.push("NICHT: "+allAvoided.join(", "));
-      if(loved.length>0) lines.push("Lieblingsgerichte (Stil nutzen, nicht wiederholen): "+loved.join(", "));
-      if(finalPrefs.devices?.length>0) lines.push("Gerät: "+finalPrefs.devices.join(", "));
+      // All prompt logic is in claude.js buildRecipePrompt – send params directly
+      const streamParams = {
+        ingredients,
+        time: finalPrefs.time,
+        mood: finalPrefs.mood,
+        portion: finalPrefs.portion,
+        intolerances: restr,
+        disliked: finalPrefs.disliked||[],
+        nope,
+        lovedRecipes: loved,
+        avoidName: lastRecipe,
+        avoidNames: allAvoided,
+        preferredCuisines: activeProfile?.cuisines||[],
+        availability: activeProfile?.availability||"supermarkt",
+        devices: finalPrefs.devices||[],
+        mustUse: mustUse||[],
+        noShopping,
+      };
 
-      const prompt=`Du bist ein kreativer Küchenchef. [${reqId}]\n\nZutaten: ${ingList}\nZEITLIMIT: ${timeLimit}\nStimmung: ${finalPrefs.mood} | Personen: ${finalPrefs.portion}\n${lines.join("\n")}\n\nREGELN:\n1. Zeitlimit ${timeLimit} einhalten.\n2. Max 1-2 Zutaten nutzen.\n3. available:true NUR wenn Zutat exakt in der Zutatenliste des Nutzers steht. Wenn keine Zutaten angegeben wurden ist available IMMER false.\n4. Küche: ${nope==="anderes_gericht"?cuisine+" – PFLICHT!":cuisine}\n5. Kreativ, kein 08/15-Gericht.\n6. Zutaten nicht still ersetzen.\n7. Unverträglichkeiten haben absolute Priorität.\n8. PORTIONSMENGEN: Realistische Haushaltsmengen – z.B. 80-100g Pasta, 150g Fleisch pro Person.\n\nAntworte NUR mit JSON:\n{"name":"...","emoji":"...","description":"...","time":"...","difficulty":"...","calories":"...","ingredients":[{"name":"...","amount":"...","available":true}],"steps":["..."],"tip":"..."}`;
-
-      const resp = await fetch("/api/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+      const resp = await fetch("/api/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(streamParams)});
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let fullText = ""; let buf = "";
