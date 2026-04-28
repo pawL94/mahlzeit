@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const params = req.body;
-  const trending = await getTrendingRecipes();
+  const trending = await getTrendingRecipes(params.mood);
   const { prompt } = await buildRecipePrompt(params, trending);
 
   res.setHeader("Content-Type", "text/event-stream");
