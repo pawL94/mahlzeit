@@ -80,18 +80,18 @@ const EMBEDDED_TRENDS = {
     "Enchiladas","Empanadas","Asado","Lahmacun","Gyros","Souvlaki",
     "Shakshuka","Pad Thai","Massaman Curry","Thai Green Curry","Panang Curry",
     "Drunken Noodles","Ma Po Tofu","Chicken Karaage","Pho","Banh Mi",
-    "Big Mac","Cheeseburger","Reuben Sandwich","Jerk Chicken",
+    "Big Mac","Cheeseburger","Reuben Sandwich",
     "Pasta Aglio e Olio","Fettuccine Alfredo","Gnocchi",
   ],
   "Leicht": [
     "Ceviche","Vietnamese Spring Rolls","Gazpacho","Ratatouille","Minestrone",
-    "Somtam","Larb","Vietnamese Chicken Salad","Falafel","Banh Mi",
+    "Somtam","Larb","Vietnamese Chicken Salad","Falafel",
     "Bouillabaisse","Sweet and Sour Chicken","Chinese Orange Chicken",
-    "Fried Rice","Arepa","Souvlaki","Polenta","Sushi",
+    "Fried Rice","Arepa","Souvlaki","Polenta","Sushi","Caprese Salat","Nicoise Salat",
   ],
   "Dessert": [
-    "Tiramisu","Creme Brulee","Churros","Mousse au Chocolat",
-    "Panna Cotta","Baklava","Mochi","Churros","Apple Pie",
+    "Tiramisu","Crème Brûlée","Churros","Mousse au Chocolat",
+    "Panna Cotta","Baklava","Mochi","Apple Pie","Käsekuchen",
   ],
   "Ueberrasch": [
     "Beef Wellington","Beef Pho","Ma Po Tofu","Drunken Noodles",
