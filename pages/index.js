@@ -767,14 +767,20 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
 function RatingModal({ recipe, profile, onDone }) {
   const [rated, setRated] = useState(false);
 
+
   const rate = (val) => {
     if(rated) return;
     setRated(true);
     const rs = store.recipes.load(profile?.id);
     const existing = rs.find(r=>r.name===recipe.name);
     if(existing) {
-      const updated = rs.map(r=>r.name===recipe.name?{...r,status:val==="up"?"loved":"saved",ratedAt:new Date().toLocaleDateString("de-DE")}:r).filter(r=>val!=="down"||r.name!==recipe.name);
+      const updated = val==="down"
+        ? rs.filter(r=>r.name!==recipe.name)
+        : rs.map(r=>r.name===recipe.name?{...r,status:"loved",ratedAt:new Date().toLocaleDateString("de-DE")}:r);
       store.recipes.save(profile?.id, updated);
+    } else if(val==="up") {
+      const entry = {...recipe,id:Date.now(),savedAt:new Date().toLocaleDateString("de-DE"),profileId:profile?.id||null,status:"loved"};
+      store.recipes.save(profile?.id,[entry,...rs.slice(0,49)]);
     }
     setTimeout(onDone, 800);
   };
