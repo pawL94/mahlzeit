@@ -752,7 +752,7 @@ function RecipeScreen({ recipe, profile, disliked, onNope, onRestart, onBack, on
               {[{label:"Zu aufwendig",desc:"Zeig mir etwas Einfacheres",emoji:"😌",reason:"zu_aufwendig"},{label:"Anderes Gericht",desc:"Komplett andere Richtung",emoji:"🔄",reason:"anderes_gericht"}].map(({label,desc,emoji,reason})=>(
                 <button key={reason} onClick={()=>{setShowNope(false);onNope(reason);}} style={{padding:"13px 16px",borderRadius:14,border:`1.5px solid ${C.cardBorder}`,background:C.surface,fontFamily:B,display:"flex",alignItems:"center",gap:12,textAlign:"left",width:"100%"}}>
                   <span style={{fontSize:24,flexShrink:0}}>{emoji}</span>
-                  <div><p style={{fontWeight:600,fontSize:14,marginBottom:2}}>{label}</p><p style={{color:C.textMuted,fontSize:12}}>{desc}</p></div>
+                  <div><p style={{fontWeight:600,fontSize:14,marginBottom:2,color:C.text}}>{label}</p><p style={{color:C.textMuted,fontSize:12}}>{desc}</p></div>
                 </button>
               ))}
             </div>
