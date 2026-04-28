@@ -43,7 +43,7 @@ async function callClaudeWithImage(prompt, base64, mimeType) {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-5",
-      max_tokens: 400,
+      max_tokens: 600,
       messages: [{
         role: "user",
         content: [
@@ -268,7 +268,28 @@ export default async function handler(req, res) {
     if (type === "scan") {
       const { base64, mimeType } = params;
       const text = await callClaudeWithImage(
-        'Analysiere dieses Foto eines Kühlschranks. Erkenne nur Lebensmittel die du KLAR und SICHER erkennen kannst. REGELN: 1. Nur konkrete Lebensmittel (Mozzarella, Karotten, Milch) – KEINE Markennamen (Alnatura, Knorr, Pringles). 2. Nur nennen was wirklich sichtbar ist – lieber weniger als halluzinieren. 3. Unscharfe/unklare Produkte weglassen. 4. Spezifisch: Mozzarella nicht Käse, Feta nicht Käse. Antworte NUR mit JSON-Array auf Deutsch: ["Mozzarella","Karotten"]. Kein Markdown.',
+        `Analysiere dieses Foto systematisch und erkenne alle sichtbaren Lebensmittel und Zutaten.
+
+VORGEHEN - scanne das Bild Reihe für Reihe:
+1. Oberes Regal / Kühlschrankdecke
+2. Mittleres Regal
+3. Unteres Regal / Gemüsefach
+4. Türfächer (falls sichtbar)
+
+FÜR JEDES PRODUKT:
+- Lies Etiketten und Beschriftungen aktiv – auch kleine oder teilweise sichtbare Texte
+- Erkenne Form, Farbe und Verpackungstyp als Hinweis wenn Text unleserlich
+- Bei teilweise verdeckten Produkten: erkenne was du siehst
+
+BENENNUNGSREGELN:
+- Spezifisch: "Mozzarella" nicht "Käse", "Feta" nicht "Käse", "Hafermilch" nicht "Milch"
+- Wenn Etikett unleserlich aber Produkt erkennbar: Kategorie nennen ("Joghurt", "Käse", "Aufschnitt")
+- KEINE Markennamen (nicht "Alnatura", "Knorr", "Milka") – nur das Produkt selbst
+- KEINE Nicht-Lebensmittel (Getränke ohne Nährwert, Putzmittel etc.)
+- Keine Halluzinationen: wenn wirklich nicht erkennbar, weglassen
+
+Antworte NUR mit JSON-Array auf Deutsch, so spezifisch wie möglich:
+["Mozzarella","Karotten","Hafermilch","Cheddar","Hähnchenbrust","Eier"]`,
         base64, mimeType
       );
       const found = JSON.parse(text.replace(/```json|```/g, "").trim());
