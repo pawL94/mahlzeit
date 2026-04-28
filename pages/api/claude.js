@@ -58,29 +58,86 @@ async function callClaudeWithImage(prompt, base64, mimeType) {
   return data.content[0].text;
 }
 
-// ── Trending recipes cache ───────────────────────────────
-let trendingCache = { recipes: [], fetchedAt: 0 };
+// ── Trending recipes – clustered by mood ─────────────────
+// Embedded current list + refreshed daily from GitHub
 const TRENDS_URL = "https://raw.githubusercontent.com/pawL94/recipe-trends-/main/trends.json";
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 Stunden
 
-export async function getTrendingRecipes() {
+// Clustered by Mahlzeit app moods – updated from current trends.json
+const EMBEDDED_TRENDS = {
+  "Herzhaft": [
+    "Spaghetti Bolognese","Pasta Carbonara","Beef Wellington","Coq au Vin",
+    "Wiener Schnitzel","Beef Bourguignon","Moussaka","Beef Stroganoff",
+    "Ungarisches Gulasch","Lasagna","Paella","Kung Pao Chicken",
+    "General Tso's Chicken","Beef Rendang","Szechuan Beef","Beef Lo Mein",
+    "Teriyaki Chicken","Tandoori Chicken","Shawarma","Kebab","Chili con Carne",
+    "Gumbo","Jambalaya","Pulled Pork","Barbecue Ribs","Fried Chicken",
+    "Jerk Chicken","Jamaican Curry","Cassoulet","Sauerbraten","Maultaschen",
+    "Fondue","Raclette","Pierogi","Feijoada","Cochinita Pibil","Mole Poblano",
+    "Carne Asada","Tikka Masala","Butter Chicken","Birria Tacos",
+    "Marry Me Chicken","Ramen","Bibimbap","Korean Fried Chicken","Bulgogi",
+    "Tonkatsu","Schnitzel","Eintopf","Pot-au-Feu","Satay","Tacos",
+    "Enchiladas","Empanadas","Asado","Lahmacun","Gyros","Souvlaki",
+    "Shakshuka","Pad Thai","Massaman Curry","Thai Green Curry","Panang Curry",
+    "Drunken Noodles","Ma Po Tofu","Chicken Karaage","Pho","Banh Mi",
+    "Big Mac","Cheeseburger","Reuben Sandwich","Jerk Chicken",
+    "Pasta Aglio e Olio","Fettuccine Alfredo","Gnocchi",
+  ],
+  "Leicht": [
+    "Ceviche","Vietnamese Spring Rolls","Gazpacho","Ratatouille","Minestrone",
+    "Somtam","Larb","Vietnamese Chicken Salad","Falafel","Banh Mi",
+    "Bouillabaisse","Sweet and Sour Chicken","Chinese Orange Chicken",
+    "Fried Rice","Arepa","Souvlaki","Polenta","Sushi",
+  ],
+  "Dessert": [
+    "Tiramisu","Creme Brulee","Churros","Mousse au Chocolat",
+    "Panna Cotta","Baklava","Mochi","Churros","Apple Pie",
+  ],
+  "Ueberrasch": [
+    "Beef Wellington","Beef Pho","Ma Po Tofu","Drunken Noodles",
+    "Bouillabaisse","Cochinita Pibil","Mole Poblano","Larb","Somtam",
+    "Fondue","Raclette","Bibimbap","Bulgogi","Tonkatsu","Birria Tacos",
+    "Shakshuka","Marry Me Chicken","Korean Fried Chicken",
+  ],
+};
+
+let liveCache = { clusters: null, fetchedAt: 0 };
+
+export async function getTrendingRecipes(mood) {
+  // Try to refresh from GitHub
   const now = Date.now();
-  if (trendingCache.recipes.length > 0 && now - trendingCache.fetchedAt < CACHE_TTL) {
-    return trendingCache.recipes;
-  }
-  try {
-    const resp = await fetch(TRENDS_URL, { signal: AbortSignal.timeout(3000) });
-    if (!resp.ok) return trendingCache.recipes;
-    const data = await resp.json();
-    if (data.recipes?.length > 0) {
-      trendingCache = { recipes: data.recipes, fetchedAt: now };
-      console.log(`Trends geladen: ${data.recipes.length} Rezepte (${data.updated_date})`);
+  if (!liveCache.clusters || now - liveCache.fetchedAt > CACHE_TTL) {
+    try {
+      const resp = await fetch(TRENDS_URL, { signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.clusters) {
+          liveCache = { clusters: data.clusters, fetchedAt: now };
+          console.log(`Live trends geladen (${data.updated_date})`);
+        }
+      }
+    } catch(e) {
+      // Fallback to embedded
     }
-    return trendingCache.recipes;
-  } catch(e) {
-    console.log("Trends nicht erreichbar, nutze Cache:", e.message);
-    return trendingCache.recipes;
   }
+
+  const clusters = liveCache.clusters || EMBEDDED_TRENDS;
+
+  // Pick mood-specific + some random from other moods
+  const moodKey = mood === "Überrasch mich!" ? "Ueberrasch"
+    : mood === "Herzhaft" ? "Herzhaft"
+    : mood === "Leicht" ? "Leicht"
+    : mood === "Dessert" ? "Dessert"
+    : "Herzhaft";
+
+  const primary = (clusters[moodKey] || clusters["Herzhaft"] || [])
+    .sort(() => Math.random() - 0.5).slice(0, 12);
+  const others = Object.entries(clusters)
+    .filter(([k]) => k !== moodKey)
+    .flatMap(([, v]) => v)
+    .sort(() => Math.random() - 0.5).slice(0, 5);
+
+  return [...primary, ...others];
 }
 
 // ── Canonical recipe prompt builder ──────────────────────
@@ -220,7 +277,7 @@ export default async function handler(req, res) {
 
     // ── Recipe (non-streaming) ────────────────────────────
     if (type === "recipe") {
-      const trending = await getTrendingRecipes();
+      const trending = await getTrendingRecipes(params.mood);
       const { prompt } = await buildRecipePrompt(params, trending);
       const text = await callClaude(SYSTEM_PROMPT, prompt, 1200);
       const recipe = JSON.parse(text.replace(/```json|```/g, "").trim());
