@@ -1,13 +1,27 @@
+import { buildRecipePrompt, getTrendingRecipes } from "./claude.js";
+
 export const config = { api: { bodyParser: { sizeLimit: "20mb" } } };
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 
+const SYSTEM_PROMPT = `Du bist ein erfahrener Küchenchef und Ernährungsberater. Du erstellst alltagstaugliche, leckere Rezepte für deutsche Haushalte.
+
+Deine Rezepte sind:
+- Vollständig und sättigend (kein Protein ohne Beilage bei herzhaften Gerichten)
+- Zeitlich realistisch (du hältst Zeitlimits strikt ein)
+- Mengenmäßig korrekt (realistische Haushaltsportionen, keine Restaurantmengen)
+- Kreativ aber umsetzbar (keine obskuren Techniken oder Geräte)
+- Konsistent (kein stilles Ersetzen von Zutaten, keine Halluzinationen)
+
+Du antwortest IMMER ausschließlich mit validem JSON, niemals mit Markdown oder Erklärungen.`;
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { prompt } = req.body;
+  const params = req.body;
+  const trending = await getTrendingRecipes();
+  const { prompt } = await buildRecipePrompt(params, trending);
 
-  // Set up SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -22,8 +36,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
-        max_tokens: 1500,
+        max_tokens: 1200,
         stream: true,
+        system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -44,11 +59,9 @@ export default async function handler(req, res) {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
-
       for (const line of lines) {
         if (!line.startsWith("data: ")) continue;
         const data = line.slice(6);
